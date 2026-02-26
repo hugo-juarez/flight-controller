@@ -4,7 +4,7 @@
 
 
 # Sets the port, relative path and memory management for this project FreeRTOS
-set(FREERTOS_KERNEL_PATH ${CMAKE_SOURCE_DIR}/ThirdParty/FreeRTOS-Kernel)
+set(FREERTOS_KERNEL_PATH ${CMAKE_SOURCE_DIR}/ThirdParty/FreeRTOS/FreeRTOS-Kernel)
 
 # Verifying submodule is initialized
 if(NOT EXISTS ${FREERTOS_KERNEL_PATH}/tasks.c)
@@ -22,11 +22,11 @@ set(FREERTOS_HEAP 4 CACHE STRING "")
 # Config library for FreeRTOS to include FreeRTOSConfig.h to project
 add_library(freertos_config INTERFACE)
 
-function(add_freertos_library TARGET_NAME CONFIG_DIR)
+function(add_freertos_library TARGET_NAME)
 
     # Include FreeRTOSConfig.h
     target_include_directories(freertos_config INTERFACE
-        ${CONFIG_DIR}
+        ${CMAKE_SOURCE_DIR}/ThirdParty/FreeRTOS
     )
 
     # Add FreeRTOS Kernel
