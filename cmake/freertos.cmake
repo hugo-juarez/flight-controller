@@ -22,44 +22,42 @@ set(FREERTOS_HEAP 4 CACHE STRING "")
 # Config library for FreeRTOS to include FreeRTOSConfig.h to project
 add_library(freertos_config INTERFACE)
 
-function(add_freertos_library TARGET_NAME)
+# Include FreeRTOSConfig.h
+target_include_directories(freertos_config INTERFACE
+    ${CMAKE_SOURCE_DIR}/ThirdParty/FreeRTOS
+)
 
-    # Include FreeRTOSConfig.h
-    target_include_directories(freertos_config INTERFACE
-        ${CMAKE_SOURCE_DIR}/ThirdParty/FreeRTOS
-    )
+# Add FreeRTOS Kernel
+add_subdirectory(${FREERTOS_KERNEL_PATH} FreeRTOS-Kernel)
 
-    # Add FreeRTOS Kernel
-    add_subdirectory(${FREERTOS_KERNEL_PATH} FreeRTOS-Kernel)
+target_compile_options(freertos_kernel PRIVATE
+    ### Gnu/Clang C Options
+    $<$<COMPILE_LANG_AND_ID:C,GNU>:-fdiagnostics-color=always>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-fcolor-diagnostics>
 
-    target_compile_options(freertos_kernel PRIVATE
-        ### Gnu/Clang C Options
-        $<$<COMPILE_LANG_AND_ID:C,GNU>:-fdiagnostics-color=always>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-fcolor-diagnostics>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wall>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wextra>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wpedantic>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Werror>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wconversion>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Weverything>
 
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wall>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wextra>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wpedantic>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Werror>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wconversion>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Weverything>
+    # Suppressions required to build clean with clang.
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-unused-macros>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-padded>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-missing-variable-declarations>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-covered-switch-default>
+    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-cast-align>
+)
 
-        # Suppressions required to build clean with clang.
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-unused-macros>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-padded>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-missing-variable-declarations>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-covered-switch-default>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-cast-align>
-    )
+add_library(freertos INTERFACE)
 
-    target_link_libraries(${TARGET_NAME}
-        freertos_kernel
-        freertos_config
-    )
+target_link_libraries(freertos INTERFACE
+    freertos_kernel
+    freertos_config
+)
 
-    message(STATUS "FreeRTOS library '${TARGET_NAME}' configured:")
-    message(STATUS "  - Port: ${FREERTOS_PORT}")
-    message(STATUS "  - Heap: ${FREERTOS_HEAP}")
-    message(STATUS "  - Config: ${CONFIG_DIR}")
-
-endfunction()
+message(STATUS "FreeRTOS library configured:")
+message(STATUS "  - Port: ${FREERTOS_PORT}")
+message(STATUS "  - Heap: ${FREERTOS_HEAP}")
+message(STATUS "  - Config: ${CONFIG_DIR}")
