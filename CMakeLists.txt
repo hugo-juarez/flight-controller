@@ -62,6 +62,7 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 # Adding subdirectories
 add_subdirectory(Config)
+add_subdirectory(Drivers_Custom)
 add_subdirectory(Tasks)
 add_subdirectory(App)
 
