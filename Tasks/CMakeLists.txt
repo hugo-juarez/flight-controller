@@ -6,19 +6,16 @@ set(TASKS_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
 
-add_library(Tasks STATIC
+add_library(tasks STATIC
     ${TASKS_SOURCE}
 )
 
-target_include_directories(Tasks PUBLIC
+target_include_directories(tasks PUBLIC
     ${TASKS_INCLUDES}
 )
 
-target_link_libraries(Tasks
-    Config
+target_link_libraries(tasks PRIVATE
     stm32cubemx
+    freertos
+    config
 )
-
-# Adding freertos to project
-include(${CMAKE_SOURCE_DIR}/cmake/freertos.cmake)
-add_freertos_library(Tasks)

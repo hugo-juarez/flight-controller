@@ -10,4 +10,6 @@ target_include_directories(drivers PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(drivers PRIVATE config)
+target_link_libraries(drivers PRIVATE
+    config
+)

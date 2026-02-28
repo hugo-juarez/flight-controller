@@ -10,16 +10,17 @@ set(APP_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
 
-add_library(App STATIC
+add_library(app STATIC
     ${APP_HEADERS}
     ${APP_SOURCE}
 )
 
-target_include_directories(App PUBLIC
+target_include_directories(app PUBLIC
     ${APP_INCLUDES}
 )
 
-target_link_libraries(App
-    Tasks
-    Config
+target_link_libraries(app PRIVATE
+    config
+    tasks
+    freertos
 )
