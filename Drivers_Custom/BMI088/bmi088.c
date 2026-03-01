@@ -51,24 +51,25 @@ FC_Status_t BMI088_Init(const BMI088_t *bmi088)
     // Wait for 450 microseconds
     HAL_Delay(1);
 
+    // Check Chip initialized correctly
+    if ( BMI088_WhoAmI(bmi088) != FC_OK) return FC_ERR;
+
     // Config Accel BWP and ODR
     uint8_t acc_conf = bmi088->settings.acc_bwp | bmi088->settings.acc_odr;
     if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_CONF, acc_conf) != FC_OK) return FC_SPI_ERR;
 
     // Config Accel Range
-    uint8_t acc_range = bmi088->settings.acc_range & 1;
+    uint8_t acc_range = bmi088->settings.acc_range & 0x3;
     if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_RANGE, acc_range) != FC_OK ) return FC_SPI_ERR;
 
-    //Check config is correct
+    //Check accel config is correct
     uint8_t read_conf = 0;
     if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CONF, &read_conf) != FC_OK ) return FC_SPI_ERR;
     if (read_conf != acc_conf) return FC_CONFIG_ERR;
-    
+
     read_conf = 0;
     if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_RANGE, &read_conf) != FC_OK ) return FC_SPI_ERR;
     if (read_conf != acc_range) return FC_CONFIG_ERR;
-
-    if ( BMI088_WhoAmI(bmi088) != FC_OK) return FC_ERR;
 
     return FC_OK;
 }
