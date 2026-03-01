@@ -31,6 +31,8 @@ static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Acc
 * ========================================================================= */
 FC_Status_t BMI088_Init(const BMI088_t *bmi088)
 {
+    if (bmi088 == NULL) return FC_NULL_PTR_ERR;
+
     // CSB Lines pull to high on start
     HAL_GPIO_WritePin(bmi088->bmi088_config.csb1_port, bmi088->bmi088_config.csb1_pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(bmi088->bmi088_config.csb2_port, bmi088->bmi088_config.csb2_pin, GPIO_PIN_SET);
@@ -56,6 +58,8 @@ FC_Status_t BMI088_Init(const BMI088_t *bmi088)
 
 FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
 {
+    if (bmi088 == NULL) return FC_NULL_PTR_ERR;
+    
     uint8_t chip_id;
     if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_CHIP_ID, &chip_id) != FC_OK) return FC_SPI_ERR;
 
