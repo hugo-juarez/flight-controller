@@ -23,53 +23,31 @@
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
+static FC_Status_t BMI088_Accel_Init(const BMI088_t *bmi088);
+static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t data);
 
 /* =========================================================================
 * Public APIs
-* ========================================================================= */
+* ===================================================================gti====== */
 FC_Status_t BMI088_Init(const BMI088_t *bmi088)
 {
     if (bmi088 == NULL) return FC_NULL_PTR_ERR;
 
-    // CSB Lines pull to high on start
-    HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_SET);
+    FC_Status_t status = FC_OK;
 
-    // 1ms after POR
-    HAL_Delay(1);
-
-    // Dummy read to initialize accelerometer on SPI mode by triggering first rising edge
-    uint8_t dummy;
-    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &dummy) != FC_OK) return FC_SPI_ERR;
-
-    // Wake up Accel
-    uint8_t pwr_ctrl = 0x04;
-    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_PWR_CTRL, pwr_ctrl) != FC_OK) return FC_SPI_ERR;
-
-    // Wait for 450 microseconds
-    HAL_Delay(1);
+    // Initialized Accelerator
+    status = BMI088_Accel_Init(bmi088);
+    if (status != FC_OK) return status;
 
     // Check Chip initialized correctly
-    if ( BMI088_WhoAmI(bmi088) != FC_OK) return FC_ERR;
+    status = BMI088_WhoAmI(bmi088);
+    if (status != FC_OK) return status;
 
-    // Config Accel BWP and ODR
-    uint8_t acc_conf = bmi088->settings.acc_bwp | bmi088->settings.acc_odr;
-    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_CONF, acc_conf) != FC_OK) return FC_SPI_ERR;
-
-    // Config Accel Range
-    uint8_t acc_range = bmi088->settings.acc_range & 0x3;
-    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_RANGE, acc_range) != FC_OK ) return FC_SPI_ERR;
-
-    //Check accel config is correct
-    uint8_t read_conf = 0;
-    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CONF, &read_conf) != FC_OK ) return FC_SPI_ERR;
-    if (read_conf != acc_conf) return FC_CONFIG_ERR;
-
-    read_conf = 0;
-    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_RANGE, &read_conf) != FC_OK ) return FC_SPI_ERR;
-    if (read_conf != acc_range) return FC_CONFIG_ERR;
+    // Configure Accel settings
+    status = BMI088_Accel_Config(bmi088);
+    if (status != FC_OK) return status;
 
     return FC_OK;
 }
@@ -89,6 +67,51 @@ FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
 /* =========================================================================
 * Private Function
 * ========================================================================= */
+static FC_Status_t BMI088_Accel_Init(const BMI088_t *bmi088)
+{
+    // CSB Lines pull to high on start
+    HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_SET);
+
+    // 1ms after POR
+    HAL_Delay(1);
+
+    // Dummy read to initialize accelerometer on SPI mode by triggering first rising edge
+    uint8_t dummy;
+    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &dummy) != FC_OK) return FC_SPI_ERR;
+
+    // Wake up Accel
+    const uint8_t pwr_ctrl = 0x04;
+    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_PWR_CTRL, pwr_ctrl) != FC_OK) return FC_SPI_ERR;
+
+    // Wait for 450 microseconds
+    HAL_Delay(1);
+
+    return FC_OK;
+}
+
+static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088)
+{
+    // Config Accel BWP and ODR
+    const uint8_t acc_conf = bmi088->settings.acc_bwp | bmi088->settings.acc_odr;
+    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_CONF, acc_conf) != FC_OK) return FC_SPI_ERR;
+
+    // Config Accel Range
+    const uint8_t acc_range = bmi088->settings.acc_range & 0x3;
+    if ( BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_RANGE, acc_range) != FC_OK ) return FC_SPI_ERR;
+
+    //Check accel config is correct
+    uint8_t read_conf = 0;
+    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CONF, &read_conf) != FC_OK ) return FC_SPI_ERR;
+    if (read_conf != acc_conf) return FC_CONFIG_ERR;
+
+    read_conf = 0;
+    if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_RANGE, &read_conf) != FC_OK ) return FC_SPI_ERR;
+    if (read_conf != acc_range) return FC_CONFIG_ERR;
+
+    return FC_OK;
+}
+
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, const BMI088_Accel_Reg_t reg, uint8_t *data)
 {
     FC_Status_t status = FC_OK;
