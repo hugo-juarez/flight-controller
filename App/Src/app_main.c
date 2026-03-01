@@ -24,15 +24,20 @@
 #include "app_main.h"
 #include <FreeRTOS.h>
 #include <task.h>
+#include "task_imu.h"
 #include "task_monitor.h"
 #include "task_priorities.h"
 
 /* =========================================================================
- * Public Function Definitions
+ * Public APIs
  * ========================================================================= */
-FC_Status_t app_init(void)
+FC_Status_t app_init(FC_Hw_t *hw)
 {
     BaseType_t status = pdFAIL;
+
+    status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)hw, TASK_PRI_IMU, NULL);
+    if (status != pdPASS) return FC_ERR;
+
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
     if (status != pdPASS) return FC_ERR;
 

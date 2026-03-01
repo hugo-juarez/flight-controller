@@ -100,7 +100,13 @@ int main(void)
   MX_USART3_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  if ( app_init() != FC_OK) Error_Handler() ;
+
+  // Defining hardware peripherals for IMU
+  FC_Hw_t hw = {
+    .hspi_imu = &hspi1,
+  };
+
+  if ( app_init(&hw) != FC_OK) Error_Handler() ;
 
   if ( app_start() != FC_OK) Error_Handler() ;
   /* USER CODE END 2 */

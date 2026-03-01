@@ -26,9 +26,9 @@
 #include "fc_types.h"
 
 /* =========================================================================
-* Public Function Prototypes
+* Public APIs
 * ========================================================================= */
-FC_Status_t app_init(void);
+FC_Status_t app_init(FC_Hw_t *hw);
 FC_Status_t app_start(void);
 
 #endif //FLIGHT_CONTROLLER_APP_MAIN_H

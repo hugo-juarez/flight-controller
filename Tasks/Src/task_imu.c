@@ -17,11 +17,17 @@
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
 #include "task_imu.h"
+#include "fc_types.h"
+#include "../../Drivers_Custom/BMI088/bmi088.h"
 
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-void task_imu(void *hw)
+void task_imu(void *params)
 {
-    
+    FC_Hw_t *hw = (FC_Hw_t *)params;
+
+    BMI088_Config_t config = {
+        .spi = hw->hspi_imu,
+    };
 }
