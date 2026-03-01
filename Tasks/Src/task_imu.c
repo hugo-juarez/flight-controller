@@ -17,9 +17,11 @@
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
 #include "task_imu.h"
+#include <FreeRTOS.h>
+#include <task.h>
+#include "BMI088/bmi088.h"
 #include "fc_types.h"
 #include "pin_map.h"
-#include "BMI088/bmi088.h"
 
 /* =========================================================================
 * Public APIs
@@ -35,4 +37,18 @@ void task_imu(void *params)
         .csb2_pin = CSB2_Pin,
         .csb2_port = CSB2_GPIO_Port,
     };
+
+    BMI088_t bmi088 = {
+        .bmi088_config = config,
+    };
+
+    // Wait 1ms before reading sensor after POR
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+
+    BMI088_Init(&bmi088);
+
+    while (1)
+    {
+
+    }
 }
