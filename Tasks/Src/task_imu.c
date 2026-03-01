@@ -42,10 +42,10 @@ void task_imu(void *params)
         .bmi088_config = config,
     };
 
-    // Wait 1ms before reading sensor after POR
-    vTaskDelay(1 / portTICK_PERIOD_MS);
+    FC_Status_t status = FC_ERR;
 
-    BMI088_Init(&bmi088);
+    status = BMI088_Init(&bmi088);
+    configASSERT(status == FC_OK);
 
     while (1)
     {
