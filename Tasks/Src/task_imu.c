@@ -38,8 +38,15 @@ void task_imu(void *params)
         .csb2_port = CSB2_GPIO_Port,
     };
 
+    BMI088_Settings_t settings = {
+        .acc_bwp = BMI088_ACCEL_BWP_OSR2,
+        .acc_odr = BMI088_ACCEL_ODR_800,
+        .acc_range = BMI088_ACCEL_RANGE_6,
+    };
+
     BMI088_t bmi088 = {
         .config = config,
+        .settings = settings,
     };
 
     FC_Status_t status = FC_ERR;

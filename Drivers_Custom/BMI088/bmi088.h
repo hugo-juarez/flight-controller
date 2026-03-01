@@ -58,6 +58,14 @@ typedef enum
     BMI088_ACCEL_ODR_800 = 0x0B,
     BMI088_ACCEL_ODR_1600 = 0x0C,
 } BMI088_Accel_ODR_t;
+
+typedef enum
+{
+    BMI088_ACCEL_RANGE_3 = 0x00,
+    BMI088_ACCEL_RANGE_6 = 0x01,
+    BMI088_ACCEL_RANGE_12 = 0x02,
+    BMI088_ACCEL_RANGE_24 = 0x03,
+} BMI088_Accel_Range_t;
 /* =========================================================================
 * Structs
 * ========================================================================= */
@@ -68,13 +76,19 @@ typedef struct
     GPIO_TypeDef            *csb1_port;
     uint16_t                csb2_pin;
     GPIO_TypeDef            *csb2_port;
-    BMI088_Accel_BWP_t      bwp;
-    BMI088_Accel_ODR_t      odr;
 } BMI088_Config_t;
 
 typedef struct
 {
+    BMI088_Accel_BWP_t      acc_bwp;
+    BMI088_Accel_ODR_t      acc_odr;
+    BMI088_Accel_Range_t    acc_range;
+} BMI088_Settings_t;
+
+typedef struct
+{
     BMI088_Config_t         config;
+    BMI088_Settings_t       settings;
 } BMI088_t;
 
 /* =========================================================================
