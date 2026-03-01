@@ -19,6 +19,8 @@
 #ifndef FLIGHT_CONTROLLER_FC_TYPES_H
 #define FLIGHT_CONTROLLER_FC_TYPES_H
 
+#include "stm32f7xx_hal.h"
+
 /* =========================================================================
 * Enums
 * ========================================================================= */
@@ -29,5 +31,13 @@ typedef enum
     FC_ERR,
 } FC_Status_t;
 
+/* =========================================================================
+* Structs
+* ========================================================================= */
+
+typedef struct
+{
+    SPI_HandleTypeDef *hspi_imu;
+} FC_Hw_t;
 
 #endif //FLIGHT_CONTROLLER_FC_TYPES_H
