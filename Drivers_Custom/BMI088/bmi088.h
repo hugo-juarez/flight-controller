@@ -28,24 +28,36 @@
 * ========================================================================= */
 typedef enum
 {
-    BMI088_ACCEL_CHIP_ID = 0x00,
-    BMI088_ACCEL_ERR_REG = 0x02,
-    BMI088_ACCEL_STATUS = 0x03,
-    BMI088_ACCEL_X_LSB = 0x12,
-    BMI088_ACCEL_Y_LSB = 0x14,
-    BMI088_ACCEL_Z_LSB = 0x16,
-    BMI088_ACCEL_CONF = 0x40,
-    BMI088_ACCEL_RANGE = 0x41,
-    BMI088_ACCEL_PWR_CTRL = 0x7D,
-    BMI088_ACCEL_ACC_SOFTRESET = 0x7E,
-} BMI088_AccelReg_t;
+    BMI088_ACCEL_REG_CHIP_ID = 0x00,
+    BMI088_ACCEL_REG_ERR = 0x02,
+    BMI088_ACCEL_REG_STATUS = 0x03,
+    BMI088_ACCEL_REG_X_LSB = 0x12,
+    BMI088_ACCEL_REG_Y_LSB = 0x14,
+    BMI088_ACCEL_REG_Z_LSB = 0x16,
+    BMI088_ACCEL_REG_CONF = 0x40,
+    BMI088_ACCEL_REG_RANGE = 0x41,
+    BMI088_ACCEL_REG_PWR_CTRL = 0x7D,
+    BMI088_ACCEL_REG_SOFTRESET = 0x7E,
+} BMI088_Accel_Reg_t;
 
 typedef enum
 {
-    BMI088_ACCEL_OSR4 = 0x08,
-    BMI088_ACCEL_OSR2 = 0x09,
-    BMI088_ACCEL_NORMAL = 0x0A,
-} BMI088_AccelODR_t;
+    BMI088_ACCEL_BWP_OSR4 = 0x80,
+    BMI088_ACCEL_BWP_OSR2 = 0x90,
+    BMI088_ACCEL_BWP_NORMAL = 0xA0,
+} BMI088_Accel_BWP_t;
+
+typedef enum
+{
+    BMI088_ACCEL_ODR_12_5 = 0x05,
+    BMI088_ACCEL_ODR_25 = 0x06,
+    BMI088_ACCEL_ODR_50 = 0x07,
+    BMI088_ACCEL_ODR_100 = 0x08,
+    BMI088_ACCEL_ODR_200 = 0x09,
+    BMI088_ACCEL_ODR_400 = 0x0A,
+    BMI088_ACCEL_ODR_800 = 0x0B,
+    BMI088_ACCEL_ODR_1600 = 0x0C,
+} BMI088_Accel_ODR_t;
 /* =========================================================================
 * Structs
 * ========================================================================= */
@@ -56,11 +68,13 @@ typedef struct
     GPIO_TypeDef            *csb1_port;
     uint16_t                csb2_pin;
     GPIO_TypeDef            *csb2_port;
+    BMI088_Accel_BWP_t      bwp;
+    BMI088_Accel_ODR_t      odr;
 } BMI088_Config_t;
 
 typedef struct
 {
-    BMI088_Config_t         bmi088_config;
+    BMI088_Config_t         config;
 } BMI088_t;
 
 /* =========================================================================

@@ -39,7 +39,7 @@ void task_imu(void *params)
     };
 
     BMI088_t bmi088 = {
-        .bmi088_config = config,
+        .config = config,
     };
 
     FC_Status_t status = FC_ERR;
