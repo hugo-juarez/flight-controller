@@ -34,10 +34,18 @@ typedef enum
     BMI088_ACCEL_X_LSB = 0x12,
     BMI088_ACCEL_Y_LSB = 0x14,
     BMI088_ACCEL_Z_LSB = 0x16,
+    BMI088_ACCEL_CONF = 0x40,
+    BMI088_ACCEL_RANGE = 0x41,
     BMI088_ACCEL_PWR_CTRL = 0x7D,
     BMI088_ACCEL_ACC_SOFTRESET = 0x7E,
 } BMI088_AccelReg_t;
 
+typedef enum
+{
+    BMI088_ACCEL_OSR4 = 0x08,
+    BMI088_ACCEL_OSR2 = 0x09,
+    BMI088_ACCEL_NORMAL = 0x0A,
+} BMI088_AccelODR_t;
 /* =========================================================================
 * Structs
 * ========================================================================= */
