@@ -44,6 +44,16 @@ void BMI088_Init(const BMI088_t *bmi088)
     BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_PWR_CTRL, pwr_ctrl);
 }
 
+FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
+{
+    uint8_t chip_id;
+    BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_CHIP_ID, &chip_id);
+
+    if (chip_id != 0x1E) return FC_ERR;
+
+    return FC_OK;
+}
+
 /* =========================================================================
 * Private Function
 * ========================================================================= */
