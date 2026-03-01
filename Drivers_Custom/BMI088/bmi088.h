@@ -58,7 +58,7 @@ typedef struct
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-void BMI088_Init(const BMI088_t *bmi088);
+FC_Status_t BMI088_Init(const BMI088_t *bmi088);
 FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088);
 
 #endif //FLIGHT_CONTROLLER_BMI088_H
