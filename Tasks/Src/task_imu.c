@@ -18,7 +18,8 @@
 * ========================================================================= */
 #include "task_imu.h"
 #include "fc_types.h"
-#include "../../Drivers_Custom/BMI088/bmi088.h"
+#include "pin_map.h"
+#include "BMI088/bmi088.h"
 
 /* =========================================================================
 * Public APIs
@@ -29,5 +30,9 @@ void task_imu(void *params)
 
     BMI088_Config_t config = {
         .spi = hw->hspi_imu,
+        .csb1_pin = CSB1_Pin,
+        .csb1_port = CSB1_GPIO_Port,
+        .csb2_pin = CSB2_Pin,
+        .csb2_port = CSB2_GPIO_Port,
     };
 }

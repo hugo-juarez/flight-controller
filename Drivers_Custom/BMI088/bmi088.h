@@ -20,6 +20,28 @@
 #ifndef FLIGHT_CONTROLLER_BMI088_H
 #define FLIGHT_CONTROLLER_BMI088_H
 
+#include "stm32f7xx_hal.h"
+
+/* =========================================================================
+* Structs
+* ========================================================================= */
+typedef struct
+{
+    SPI_HandleTypeDef       *spi;
+    uint16_t                csb1_pin;
+    GPIO_TypeDef            *csb1_port;
+    uint16_t                csb2_pin;
+    GPIO_TypeDef            *csb2_port;
+} BMI088_Config_t;
+
+typedef struct
+{
+    BMI088_Config_t         bmi088_config;
+} BMI088_t;
+
+/* =========================================================================
+* Public APIs
+* ========================================================================= */
 
 
 #endif //FLIGHT_CONTROLLER_BMI088_H

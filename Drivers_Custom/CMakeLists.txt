@@ -12,4 +12,5 @@ target_include_directories(drivers PUBLIC
 
 target_link_libraries(drivers PRIVATE
     config
+    stm32cubemx
 )

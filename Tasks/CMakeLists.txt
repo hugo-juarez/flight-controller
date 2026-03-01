@@ -18,5 +18,6 @@ target_include_directories(tasks PUBLIC
 target_link_libraries(tasks PRIVATE
     stm32cubemx
     freertos
+    drivers
     config
 )
