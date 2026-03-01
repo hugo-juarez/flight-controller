@@ -21,6 +21,22 @@
 #define FLIGHT_CONTROLLER_BMI088_H
 
 #include "stm32f7xx_hal.h"
+#include "fc_types.h"
+
+/* =========================================================================
+* Enums
+* ========================================================================= */
+typedef enum
+{
+    BMI088_ACCEL_CHIP_ID = 0x00,
+    BMI088_ACCEL_ERR_REG = 0x02,
+    BMI088_ACCEL_STATUS = 0x03,
+    BMI088_ACCEL_X_LSB = 0x12,
+    BMI088_ACCEL_Y_LSB = 0x14,
+    BMI088_ACCEL_Z_LSB = 0x16,
+    BMI088_ACCEL_PWR_CTRL = 0x7D,
+    BMI088_ACCEL_ACC_SOFTRESET = 0x7E,
+} BMI088_AccelReg_t;
 
 /* =========================================================================
 * Structs
@@ -42,6 +58,6 @@ typedef struct
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-
+FC_Hw_t BMI088_Init(void);
 
 #endif //FLIGHT_CONTROLLER_BMI088_H
