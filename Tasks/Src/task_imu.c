@@ -56,6 +56,9 @@ void task_imu(void *params)
 
     while (1)
     {
+        status = BMI088_Read_Accel(&bmi088, &hw->accel_data);
+        configASSERT(status == FC_OK);
 
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
