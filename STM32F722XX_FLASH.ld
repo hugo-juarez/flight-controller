@@ -55,7 +55,7 @@ ENTRY(Reset_Handler)
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 176K
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 240K
 SRAM2 (xrw)     : ORIGIN = 0x2003C000, LENGTH = 16K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
 }
@@ -224,20 +224,20 @@ SECTIONS
   /* SRAM2 uninitialized */
   .sram2 (NOLOAD) :
   {
-    . = ALIGN(4);
+    . = ALIGN(32);
     _sram2_start = .;
     *(.sram2)
     *(.sram2*)
-    . = ALIGN(4);
+    . = ALIGN(32);
     _sram2_end = .;
   } >SRAM2
   /* SRAM2 zero-initialized */
   .sram2_bss (NOLOAD) :
   {
-    . = ALIGN(4);
+    . = ALIGN(32);
     *(.sram2_bss)
     *(.sram2_bss*)
-    . = ALIGN(4);
+    . = ALIGN(32);
   } >SRAM2
 
   PROVIDE( __non_tls_bss_start = ADDR(.bss) );
