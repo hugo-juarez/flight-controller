@@ -37,15 +37,15 @@ typedef enum
 /* =========================================================================
 * Structs
 * ========================================================================= */
-
-typedef struct
-{
-    SPI_HandleTypeDef *hspi_imu;
-} FC_Hw_t;
-
 typedef struct
 {
     float ax, ay, az; /* Accelerometer data in m/s^2 */
 } FC_IMU_Data_t;
+
+typedef struct
+{
+    SPI_HandleTypeDef *hspi_imu;
+    FC_IMU_Data_t accel_data;
+} FC_Hw_t;
 
 #endif //FLIGHT_CONTROLLER_FC_TYPES_H
