@@ -98,14 +98,10 @@ FC_Status_t BMI088_Read_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
     // Get range converted for mg
     const float acc_range = acc_range_conversion[bmi088->settings.acc_range];
 
-    // Convert to m/s
-    const float ax_mg = (float) ax_lsb * acc_range;
-    const float ay_mg = (float) ay_lsb * acc_range;
-    const float az_mg = (float) az_lsb * acc_range;
-
-    imu_data->ax = ax_mg;
-    imu_data->ay = ay_mg;
-    imu_data->az = az_mg;
+    // Convert to m/s^2 and save to imu_data
+    imu_data->ax = (float) ax_lsb * acc_range;
+    imu_data->ay = (float) ay_lsb * acc_range;
+    imu_data->az = (float) az_lsb * acc_range;
 
     return FC_OK;
 }
