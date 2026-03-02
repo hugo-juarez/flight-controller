@@ -96,5 +96,6 @@ typedef struct
 * ========================================================================= */
 FC_Status_t BMI088_Init(const BMI088_t *bmi088);
 FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088);
+FC_Status_t BMI088_Read_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data);
 
 #endif //FLIGHT_CONTROLLER_BMI088_H

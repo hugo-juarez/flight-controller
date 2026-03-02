@@ -18,7 +18,18 @@
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
 #include "bmi088.h"
+#include <string.h>
 #include "pin_map.h"
+
+/* =========================================================================
+* Private Function Variables
+* ========================================================================= */
+static const float acc_range_conversion[] = {
+    [BMI088_ACCEL_RANGE_3] = 3.0f / 32768.0f * 1000.0f * 9.80665f,
+    [BMI088_ACCEL_RANGE_6] = 6.0f / 32768.0f * 1000.0f * 9.80665f,
+    [BMI088_ACCEL_RANGE_12] = 12.0f / 32768.0f * 1000.0f * 9.80665f,
+    [BMI088_ACCEL_RANGE_24] = 24.0f / 32768.0f * 1000.0f * 9.80665f,
+};
 
 /* =========================================================================
 * Private Function Prototypes
@@ -27,10 +38,11 @@ static FC_Status_t BMI088_Accel_Init(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t data);
+static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
 
 /* =========================================================================
 * Public APIs
-* ===================================================================gti====== */
+* ========================================================================= */
 FC_Status_t BMI088_Init(const BMI088_t *bmi088)
 {
     if (bmi088 == NULL) return FC_NULL_PTR_ERR;
@@ -60,6 +72,40 @@ FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
     if ( BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &chip_id) != FC_OK) return FC_SPI_ERR;
 
     if (chip_id != 0x1E) return FC_ERR;
+
+    return FC_OK;
+}
+
+FC_Status_t BMI088_Read_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
+{
+    if (bmi088 == NULL || imu_data == NULL) return FC_NULL_PTR_ERR;
+
+    FC_Status_t status = FC_OK;
+
+    // Data should be able to hold accel LSB and MSB parts
+    uint8_t data[6];
+    status = BMI088_Accel_BurstReadData(bmi088, data);
+    if ( status != FC_OK ) return status;
+
+    // Join values MSB and LSB
+    const int16_t ax_lsb = (int16_t) ((uint16_t) data[1] << 8 | data[0]);
+    const int16_t ay_lsb = (int16_t) ((uint16_t) data[3] << 8 | data[2]);
+    const int16_t az_lsb = (int16_t) ((uint16_t) data[5] << 8 | data[4]);
+
+    // Checking acc_range is valid before assign it
+    if (bmi088->settings.acc_range >= sizeof(acc_range_conversion)/sizeof(acc_range_conversion[0])) return FC_CONFIG_ERR;
+
+    // Get range converted for mg
+    const float acc_range = acc_range_conversion[bmi088->settings.acc_range];
+
+    // Convert to m/s
+    const float ax_mg = (float) ax_lsb * acc_range;
+    const float ay_mg = (float) ay_lsb * acc_range;
+    const float az_mg = (float) az_lsb * acc_range;
+
+    imu_data->ax = ax_mg;
+    imu_data->ay = ay_mg;
+    imu_data->az = az_mg;
 
     return FC_OK;
 }
@@ -147,6 +193,30 @@ static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, const BMI0
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
+
+    return status;
+}
+
+static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *data)
+{
+    FC_Status_t status = FC_OK;
+
+    // Turn CSB1 to 0 to initialize communication
+    HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_RESET);
+
+    // IMPORTANT: Reading 6 accel data register + 1 transmit + 1 dummy
+    // On initializing tx_buffer array all other elements are zero-initialized
+    const uint8_t tx_buffer[8] = {(uint8_t) (BMI088_ACCEL_REG_X_LSB | (1 << 7))};
+    uint8_t rx_buffer[8];
+    if ( HAL_SPI_TransmitReceive(bmi088->config.spi, tx_buffer, rx_buffer, 8, HAL_MAX_DELAY) != HAL_OK) status = FC_SPI_ERR;
+
+    // Turn CSB1 to 1 to finalize communication
+    HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
+
+    if (status == FC_OK)
+    {
+        memcpy(data, &rx_buffer[2], 6);
+    }
 
     return status;
 }
