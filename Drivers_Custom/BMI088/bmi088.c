@@ -52,7 +52,7 @@ static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t data);
 static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
-static FC_Status_t BMI088_SPI_DMA_Transfer(const BMI088_t *bmi088, uint8_t *tx, uint8_t *rx, uint16_t len);
+static FC_Status_t BMI088_SPI_DMA_Transfer(const BMI088_t *bmi088, const uint8_t *tx, uint8_t *rx, uint16_t len);
 
 /* =========================================================================
 * Public APIs
@@ -254,16 +254,29 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     return status;
 }
 
-static FC_Status_t BMI088_SPI_DMA_Transfer(const BMI088_t *bmi088, uint8_t *tx, uint8_t *rx, uint16_t len)
+static FC_Status_t BMI088_SPI_DMA_Transfer(const BMI088_t *bmi088, const uint8_t *tx, uint8_t *rx, const uint16_t len)
 {
     // Variable to get callback status
     uint32_t cb_status = 0;
 
-    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, tx, rx, len) != HAL_OK)
+    const HAL_StatusTypeDef hal_status = HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, tx, rx, len);
+
+    if (hal_status == HAL_BUSY)
+    {
+        HAL_SPI_Abort(bmi088->config.spi);
+    }
+
+    if (hal_status != HAL_OK)
+    {
         return FC_SPI_ERR;
+    }
+
 
     if ( xTaskNotifyWaitIndexed(BMI088_TASK_NOTIFY_INDEX, ULONG_MAX, ULONG_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    {
+        HAL_SPI_Abort(bmi088->config.spi);
         return FC_ERR_TIMEOUT;
+    }
 
     if (cb_status != FC_OK)
     {
