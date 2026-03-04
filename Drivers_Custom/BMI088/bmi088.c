@@ -189,7 +189,7 @@ static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, const BMI08
     accel_tx_dma[0] = (uint8_t) (reg | (1 << 7));
 
     if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 3) != HAL_OK) status = FC_SPI_ERR;
-    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -217,7 +217,7 @@ static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, const BMI0
     accel_tx_dma[1] = data;
 
     if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 2) != HAL_OK) status = FC_SPI_ERR;
-    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -240,7 +240,7 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     // On initializing tx_buffer array all other elements are zero-initialized
     accel_tx_dma[0] = (uint8_t) (BMI088_ACCEL_REG_X_LSB | 0x80);
     if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 8) != HAL_OK) status = FC_SPI_ERR;
-    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
