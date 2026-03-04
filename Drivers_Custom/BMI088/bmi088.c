@@ -95,7 +95,7 @@ FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
     const FC_Status_t status = BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &chip_id);
     if (status != FC_OK ) return status;
 
-    if (chip_id != 0x1E) return FC_ERR;
+    if (chip_id != BMI088_ACCEL_CHIP_ID) return FC_ERR;
 
     return FC_OK;
 }
@@ -148,8 +148,7 @@ static FC_Status_t BMI088_Accel_Init(const BMI088_t *bmi088)
     if (status != FC_OK) return status;
 
     // Wake up Accel
-    const uint8_t pwr_ctrl = 0x04;
-    status = BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_PWR_CTRL, pwr_ctrl);
+    status = BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_PWR_CTRL, BMI088_ACCEL_PWR_CTRL_EN);
     if (status != FC_OK) return status;
 
     // Wait for >=450 microseconds
