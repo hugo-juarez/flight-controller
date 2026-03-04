@@ -24,6 +24,17 @@
 /* =========================================================================
 * Private Function Variables
 * ========================================================================= */
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t accel_tx_dma[8];
+
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t accel_rx_dma[8];
+
+static SPI_HandleTypeDef* bmi088_spi;
+static TaskHandle_t bmi088_task_handle;
+
 static const float acc_range_conversion[] = {
     [BMI088_ACCEL_RANGE_3] = 3.0f / 32768.0f * 9.80665f,
     [BMI088_ACCEL_RANGE_6] = 6.0f / 32768.0f * 9.80665f,
@@ -48,6 +59,16 @@ FC_Status_t BMI088_Init(const BMI088_t *bmi088)
     if (bmi088 == NULL) return FC_NULL_PTR_ERR;
 
     FC_Status_t status = FC_OK;
+
+    // Set SPI connection
+    bmi088_spi = bmi088->config.spi;
+
+    // Set Task Handling bmi088 it should always be only one
+    bmi088_task_handle = bmi088->config.task_handle;
+
+    // Initialized buffers
+    memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
+    memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
 
     // Initialized Accelerator
     status = BMI088_Accel_Init(bmi088);
@@ -160,17 +181,22 @@ static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, const BMI08
     // Turn CSB1 to 0 to initialize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_RESET);
 
+    // Clearing buffers
+    memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
+    memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
+
     // Bit #7 marks 1 as reading from register and 0 as writting to register
-    const uint8_t tx_buffer[3] = { (uint8_t) (reg | (1 << 7)) };
-    uint8_t rx_buffer[3];
-    if ( HAL_SPI_TransmitReceive(bmi088->config.spi, tx_buffer, rx_buffer, 3, HAL_MAX_DELAY) != HAL_OK) status = FC_SPI_ERR;
+    accel_tx_dma[0] = (uint8_t) (reg | (1 << 7));
+
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 3) != HAL_OK) status = FC_SPI_ERR;
+    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
 
     if (status == FC_OK)
     {
-        *data = rx_buffer[2];
+        *data = accel_rx_dma[2];
     }
 
     return status;
@@ -183,9 +209,15 @@ static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, const BMI0
     // Turn CSB1 to 0 to initialize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_RESET);
 
+    // Clearing buffer
+    memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
+
     // Bit #7 marks 1 as reading from register and 0 as writing to register
-    const uint8_t tx_buffer[2] = { (uint8_t) (reg & ~(1 << 7)), data };
-    if ( HAL_SPI_Transmit(bmi088->config.spi, tx_buffer, 2, HAL_MAX_DELAY) != HAL_OK) status = FC_SPI_ERR;
+    accel_tx_dma[0] = (uint8_t) (reg & ~(1 << 7));
+    accel_tx_dma[1] = data;
+
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 2) != HAL_OK) status = FC_SPI_ERR;
+    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -200,19 +232,46 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     // Turn CSB1 to 0 to initialize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_RESET);
 
+    // Clearing buffers
+    memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
+    memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
+
     // IMPORTANT: Reading 6 accel data register + 1 transmit + 1 dummy
     // On initializing tx_buffer array all other elements are zero-initialized
-    const uint8_t tx_buffer[8] = {(uint8_t) (BMI088_ACCEL_REG_X_LSB | (1 << 7))};
-    uint8_t rx_buffer[8];
-    if ( HAL_SPI_TransmitReceive(bmi088->config.spi, tx_buffer, rx_buffer, 8, HAL_MAX_DELAY) != HAL_OK) status = FC_SPI_ERR;
+    accel_tx_dma[0] = (uint8_t) (BMI088_ACCEL_REG_X_LSB | 0x80);
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 8) != HAL_OK) status = FC_SPI_ERR;
+    if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
 
     if (status == FC_OK)
     {
-        memcpy(data, &rx_buffer[2], 6);
+        memcpy(data, &accel_rx_dma[2], 6);
     }
 
     return status;
+}
+
+/* =========================================================================
+* Callback Functions
+* ========================================================================= */
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi->Instance == bmi088_spi->Instance)
+    {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        configASSERT(bmi088_task_handle != NULL);
+        vTaskNotifyGiveIndexedFromISR(bmi088_task_handle, 1, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi->Instance == bmi088_spi->Instance)
+    {
+        HAL_SPI_Abort(hspi);
+        //@todo: Notify / Manage SPI communication failure
+    }
 }

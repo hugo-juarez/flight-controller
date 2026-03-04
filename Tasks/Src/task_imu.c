@@ -31,6 +31,7 @@ void task_imu(void *params)
     FC_Hw_t *hw = (FC_Hw_t *)params;
 
     BMI088_Config_t config = {
+        .task_handle = xTaskGetCurrentTaskHandle(),
         .spi = hw->hspi_imu,
         .csb1_pin = CSB1_Pin,
         .csb1_port = CSB1_GPIO_Port,
