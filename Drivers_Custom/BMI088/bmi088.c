@@ -119,7 +119,7 @@ FC_Status_t BMI088_Read_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
     // Checking acc_range is valid before assign it
     if (bmi088->settings.acc_range >= sizeof(acc_range_conversion)/sizeof(acc_range_conversion[0])) return FC_CONFIG_ERR;
 
-    // Get range converted for mg
+    // Get range converted for m/s^2
     const float acc_range = acc_range_conversion[bmi088->settings.acc_range];
 
     // Convert to m/s^2 and save to imu_data
@@ -194,7 +194,7 @@ static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, const BMI08
     memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
     memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
 
-    // Bit #7 marks 1 as reading from register and 0 as writting to register
+    // Bit #7 marks 1 as reading from register and 0 as writing to register
     accel_tx_dma[0] = (uint8_t) (reg | 0x80);
 
     // Variable to get callback status
