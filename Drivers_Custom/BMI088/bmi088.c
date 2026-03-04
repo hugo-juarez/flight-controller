@@ -18,6 +18,8 @@
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
 #include "bmi088.h"
+
+#include <limits.h>
 #include <string.h>
 #include "pin_map.h"
 
@@ -186,10 +188,23 @@ static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, const BMI08
     memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
 
     // Bit #7 marks 1 as reading from register and 0 as writting to register
-    accel_tx_dma[0] = (uint8_t) (reg | (1 << 7));
+    accel_tx_dma[0] = (uint8_t) (reg | 0x80);
 
-    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 3) != HAL_OK) status = FC_SPI_ERR;
-    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    // Variable to get callback status
+    uint32_t cb_status = 0;
+
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 3) != HAL_OK)
+    {// NOLINT(*-branch-clone)
+        status = FC_SPI_ERR;
+    }
+    else if ( xTaskNotifyWaitIndexed(1, ULONG_MAX, ULONG_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    {
+        status = FC_ERR_TIMEOUT;
+    }
+    else if (cb_status != FC_OK)
+    {
+        status = FC_SPI_ERR;
+    }
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -213,11 +228,24 @@ static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, const BMI0
     memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
 
     // Bit #7 marks 1 as reading from register and 0 as writing to register
-    accel_tx_dma[0] = (uint8_t) (reg & ~(1 << 7));
+    accel_tx_dma[0] = (uint8_t) (reg & ~0x80);
     accel_tx_dma[1] = data;
 
-    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 2) != HAL_OK) status = FC_SPI_ERR;
-    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    // Variable to get callback status
+    uint32_t cb_status = 0;
+
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 2) != HAL_OK)
+    {// NOLINT(*-branch-clone)
+        status = FC_SPI_ERR;
+    }
+    else if ( xTaskNotifyWaitIndexed(1, ULONG_MAX, ULONG_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    {
+        status = FC_ERR_TIMEOUT;
+    }
+    else if (cb_status != FC_OK)
+    {
+        status = FC_SPI_ERR;
+    }
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -236,11 +264,24 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
     memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
 
+    // Variable to get callback status
+    uint32_t cb_status = 0;
+
     // IMPORTANT: Reading 6 accel data register + 1 transmit + 1 dummy
     // On initializing tx_buffer array all other elements are zero-initialized
     accel_tx_dma[0] = (uint8_t) (BMI088_ACCEL_REG_X_LSB | 0x80);
-    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 8) != HAL_OK) status = FC_SPI_ERR;
-    else if ( ulTaskNotifyTakeIndexed(1, pdTRUE, pdMS_TO_TICKS(2)) == 0) status = FC_ERR_TIMEOUT;
+    if ( HAL_SPI_TransmitReceive_DMA(bmi088->config.spi, accel_tx_dma, accel_rx_dma, 8) != HAL_OK)
+    { // NOLINT(*-branch-clone)
+        status = FC_SPI_ERR;
+    }
+    else if ( xTaskNotifyWaitIndexed(1, ULONG_MAX, ULONG_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    {
+        status = FC_ERR_TIMEOUT;
+    }
+    else if (cb_status != FC_OK)
+    {
+        status = FC_SPI_ERR;
+    }
 
     // Turn CSB1 to 1 to finalize communication
     HAL_GPIO_WritePin(bmi088->config.csb1_port, bmi088->config.csb1_pin, GPIO_PIN_SET);
@@ -262,7 +303,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         configASSERT(bmi088_task_handle != NULL);
-        vTaskNotifyGiveIndexedFromISR(bmi088_task_handle, 1, &xHigherPriorityTaskWoken);
+        xTaskNotifyIndexedFromISR(bmi088_task_handle, 1, FC_OK, eSetBits, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
     }
 }
@@ -271,7 +312,9 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 {
     if (hspi->Instance == bmi088_spi->Instance)
     {
-        HAL_SPI_Abort(hspi);
-        //@todo: Notify / Manage SPI communication failure
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        configASSERT(bmi088_task_handle != NULL);
+        xTaskNotifyIndexedFromISR(bmi088_task_handle, 1, FC_SPI_ERR, eSetBits, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
     }
 }
