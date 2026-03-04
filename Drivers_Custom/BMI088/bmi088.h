@@ -20,6 +20,8 @@
 #ifndef FLIGHT_CONTROLLER_BMI088_H
 #define FLIGHT_CONTROLLER_BMI088_H
 
+#include <FreeRTOS.h>
+#include <task.h>
 #include "stm32f7xx_hal.h"
 #include "fc_types.h"
 
@@ -71,6 +73,7 @@ typedef enum
 * ========================================================================= */
 typedef struct
 {
+    TaskHandle_t            task_handle;
     SPI_HandleTypeDef       *spi;
     uint16_t                csb1_pin;
     GPIO_TypeDef            *csb1_port;
