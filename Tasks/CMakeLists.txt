@@ -1,6 +1,7 @@
 set(TASKS_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_monitor.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_imu.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_crsf.c
 )
 
 set(TASKS_INCLUDES
