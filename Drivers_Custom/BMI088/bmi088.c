@@ -134,6 +134,19 @@ FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
     return FC_OK;
 }
 
+FC_Status_t BMI088_Read_IMU(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
+{
+    if (bmi088 == NULL || imu_data == NULL) return FC_NULL_PTR_ERR;
+
+    FC_Status_t status = BMI088_Read_IMU_Accel(bmi088, imu_data);
+    if (status != FC_OK) return status;
+
+    status = BMI088_Read_IMU_Gyro(bmi088, imu_data);
+    if (status != FC_OK) return status;
+
+    return FC_OK;
+}
+
 FC_Status_t BMI088_Read_IMU_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
 {
     if (bmi088 == NULL || imu_data == NULL) return FC_NULL_PTR_ERR;
