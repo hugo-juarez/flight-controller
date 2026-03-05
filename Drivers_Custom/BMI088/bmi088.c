@@ -34,6 +34,14 @@ __attribute__((section(".sram2")))
 __attribute__((aligned(32)))
 static uint8_t accel_rx_dma[8];
 
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t gyro_tx_dma[7];
+
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t gyro_rx_dma[7];
+
 static SPI_HandleTypeDef* bmi088_spi;
 static TaskHandle_t bmi088_task_handle;
 
@@ -52,6 +60,9 @@ static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t data);
 static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
+static FC_Status_t BMI088_Gyro_ReadRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t *data);
+static FC_Status_t BMI088_Gyro_WriteRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t data);
+static FC_Status_t BMI088_Gyro_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
 static FC_Status_t BMI088_SPI_DMA_Transfer(const BMI088_t *bmi088, const uint8_t *tx, uint8_t *rx, uint16_t len);
 
 /* =========================================================================
@@ -249,6 +260,76 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     if (status == FC_OK)
     {
         memcpy(data, &accel_rx_dma[2], 6);
+    }
+
+    return status;
+}
+
+static FC_Status_t BMI088_Gyro_ReadRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t *data)
+{
+    // Turn CSB2 to 0 to initialize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_RESET);
+
+    // Clearing buffers
+    memset(gyro_tx_dma, 0, sizeof(gyro_tx_dma));
+    memset(gyro_rx_dma, 0, sizeof(gyro_rx_dma));
+
+    // Bit #7 marks 1 as reading from register and 0 as writing to register
+    gyro_tx_dma[0] = (uint8_t) (reg | 0x80);
+
+    const FC_Status_t status = BMI088_SPI_DMA_Transfer(bmi088, gyro_tx_dma, gyro_rx_dma, 2);
+
+    // Turn CSB2 to 1 to finalize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_SET);
+
+    if (status == FC_OK)
+    {
+        *data = gyro_rx_dma[1];
+    }
+
+    return status;
+}
+
+static FC_Status_t BMI088_Gyro_WriteRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t data)
+{
+    // Turn CSB2 to 0 to initialize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_RESET);
+
+    // Clearing buffers
+    memset(gyro_tx_dma, 0, sizeof(gyro_tx_dma));
+    memset(gyro_rx_dma, 0, sizeof(gyro_rx_dma));
+
+    // Bit #7 marks 1 as reading from register and 0 as writing to register
+    gyro_tx_dma[0] = (uint8_t) (reg & ~0x80);
+    gyro_tx_dma[1] = data;
+
+    const FC_Status_t status = BMI088_SPI_DMA_Transfer(bmi088, gyro_tx_dma, gyro_rx_dma, 2);
+
+    // Turn CSB2 to 1 to finalize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_SET);
+
+    return status;
+}
+static FC_Status_t BMI088_Gyro_BurstReadData(const BMI088_t *bmi088, uint8_t *data)
+{
+    // Turn CSB2 to 0 to initialize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_RESET);
+
+    // Clearing buffers
+    memset(gyro_tx_dma, 0, sizeof(gyro_tx_dma));
+    memset(gyro_rx_dma, 0, sizeof(gyro_rx_dma));
+
+    // Assigning transmit register, in burst read it gets auto incremented every read
+    gyro_tx_dma[0] = (uint8_t) (BMI088_GYRO_REG_X_LSB | 0x80);
+
+    const FC_Status_t status = BMI088_SPI_DMA_Transfer(bmi088, gyro_tx_dma, gyro_rx_dma, 7);
+
+    // Turn CSB2 to 1 to finalize communication
+    HAL_GPIO_WritePin(bmi088->config.csb2_port, bmi088->config.csb2_pin, GPIO_PIN_SET);
+
+    if (status == FC_OK)
+    {
+        memcpy(data, &gyro_rx_dma[1], 6);
     }
 
     return status;
