@@ -41,6 +41,7 @@ typedef enum
 typedef struct
 {
     float ax, ay, az; /* Accelerometer data in m/s^2 */
+    float gx, gy, gz; /* Gyro data in deg/s */
 } FC_IMU_Data_t;
 
 typedef struct
