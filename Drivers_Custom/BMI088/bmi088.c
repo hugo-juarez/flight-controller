@@ -111,10 +111,15 @@ FC_Status_t BMI088_WhoAmI(const BMI088_t *bmi088)
     if (bmi088 == NULL) return FC_NULL_PTR_ERR;
     
     uint8_t chip_id;
-    const FC_Status_t status = BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &chip_id);
+    FC_Status_t status = BMI088_Accel_ReadRegister(bmi088, BMI088_ACCEL_REG_CHIP_ID, &chip_id);
     if (status != FC_OK ) return status;
 
     if (chip_id != BMI088_ACCEL_CHIP_ID) return FC_ERR;
+
+    status = BMI088_Gyro_ReadRegister(bmi088, BMI088_GYRO_REG_CHIP_ID, &chip_id);
+    if (status != FC_OK ) return status;
+
+    if (chip_id != BMI088_GYRO_CHIP_ID) return FC_ERR;
 
     return FC_OK;
 }
