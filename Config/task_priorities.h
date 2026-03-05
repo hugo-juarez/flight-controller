@@ -20,9 +20,11 @@
 #define FLIGHT_CONTROLLER_TASK_PRIORITIES_H
 
 #define TASK_PRI_IMU                (7)
+#define TASK_PRI_CRSF               (5)
 #define TASK_PRI_MONITOR_LED        (1)
 
 #define STACK_IMU                   (256)
+#define STACK_CRSF                  (256)
 #define STACK_MONITOR_LED           (128)
 
 #endif //FLIGHT_CONTROLLER_TASK_PRIORITIES_H
