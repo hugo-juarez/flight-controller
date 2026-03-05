@@ -87,6 +87,27 @@ typedef enum
     BMI088_GYRO_REG_LPM1 = 0x11,
     BMI088_GYRO_REG_SOFTRESET = 0x14,
 } BMI088_Gyro_Reg_t;
+
+typedef enum
+{
+    BMI088_GYRO_RANGE_2000 = 0x00,
+    BMI088_GYRO_RANGE_1000 = 0x01,
+    BMI088_GYRO_RANGE_500 = 0x02,
+    BMI088_GYRO_RANGE_250 = 0x03,
+    BMI088_GYRO_RANGE_125 = 0x04,
+} BMI088_Gyro_Range_t;
+
+typedef enum
+{
+    BMI088_GYRO_BANDWIDTH_2000_532 = 0x00,
+    BMI088_GYRO_BANDWIDTH_2000_230 = 0x01,
+    BMI088_GYRO_BANDWIDTH_1000_116 = 0x02,
+    BMI088_GYRO_BANDWIDTH_400_47 = 0x03,
+    BMI088_GYRO_BANDWIDTH_200_23 = 0x04,
+    BMI088_GYRO_BANDWIDTH_100_12 = 0x05,
+    BMI088_GYRO_BANDWIDTH_200_64 = 0x06,
+    BMI088_GYRO_BANDWIDTH_100_32 = 0x07,
+} BMI088_Gyro_Bandwidth_t;
 /* =========================================================================
 * Structs
 * ========================================================================= */
@@ -102,9 +123,11 @@ typedef struct
 
 typedef struct
 {
-    BMI088_Accel_BWP_t      acc_bwp;
-    BMI088_Accel_ODR_t      acc_odr;
-    BMI088_Accel_Range_t    acc_range;
+    BMI088_Accel_BWP_t          acc_bwp;
+    BMI088_Accel_ODR_t          acc_odr;
+    BMI088_Accel_Range_t        acc_range;
+    BMI088_Gyro_Bandwidth_t     gyro_bandwidth;
+    BMI088_Gyro_Range_t         gyro_range;
 } BMI088_Settings_t;
 
 typedef struct
