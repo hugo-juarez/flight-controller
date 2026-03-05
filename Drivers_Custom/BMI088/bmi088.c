@@ -60,6 +60,7 @@ static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Accel_ReadRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Accel_WriteRegister(const BMI088_t *bmi088, BMI088_Accel_Reg_t reg, uint8_t data);
 static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
+static FC_Status_t BMI088_Gyro_Config(const BMI088_t *bmi088);
 static FC_Status_t BMI088_Gyro_ReadRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t *data);
 static FC_Status_t BMI088_Gyro_WriteRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t data);
 static FC_Status_t BMI088_Gyro_BurstReadData(const BMI088_t *bmi088, uint8_t *data);
@@ -88,12 +89,18 @@ FC_Status_t BMI088_Init(const BMI088_t *bmi088)
     status = BMI088_Accel_Init(bmi088);
     if (status != FC_OK) return status;
 
+    // Gyro doesn't requires initialization sequence for SPI
+
     // Check Chip initialized correctly
     status = BMI088_WhoAmI(bmi088);
     if (status != FC_OK) return status;
 
     // Configure Accel settings
     status = BMI088_Accel_Config(bmi088);
+    if (status != FC_OK) return status;
+
+    // Configure Gyro settings
+    status = BMI088_Gyro_Config(bmi088);
     if (status != FC_OK) return status;
 
     return FC_OK;
@@ -263,6 +270,31 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
     }
 
     return status;
+}
+
+static FC_Status_t BMI088_Gyro_Config(const BMI088_t *bmi088)
+{
+    // Config Gyro Bandwidth
+    const uint8_t bandwidth = bmi088->settings.gyro_bandwidth;
+    FC_Status_t status = BMI088_Gyro_WriteRegister(bmi088, BMI088_GYRO_REG_BANDWIDTH, bandwidth);
+    if (status != FC_OK) return status;
+
+    // Config Gyro Range
+    const uint8_t range = bmi088->settings.gyro_range;
+    status = BMI088_Gyro_WriteRegister(bmi088, BMI088_GYRO_REG_RANGE, range);
+    if (status != FC_OK) return status;
+
+    // Confirm writes where successful
+    uint8_t read_conf = 0;
+    status = BMI088_Gyro_ReadRegister(bmi088, BMI088_GYRO_REG_BANDWIDTH, &read_conf);
+    if (status != FC_OK) return status;
+    if (read_conf != bandwidth) return FC_CONFIG_ERR;
+
+    status = BMI088_Gyro_ReadRegister(bmi088, BMI088_GYRO_REG_RANGE, &read_conf);
+    if (status != FC_OK) return status;
+    if (read_conf != range) return FC_CONFIG_ERR;
+
+    return FC_OK;
 }
 
 static FC_Status_t BMI088_Gyro_ReadRegister(const BMI088_t *bmi088, BMI088_Gyro_Reg_t reg, uint8_t *data)
