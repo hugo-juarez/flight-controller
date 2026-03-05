@@ -52,6 +52,14 @@ static const float acc_range_conversion[] = {
     [BMI088_ACCEL_RANGE_24] = 24.0f / 32768.0f * 9.80665f,
 };
 
+static const float gyro_range_conversion[] = {
+    [BMI088_GYRO_RANGE_2000] = 2000.0f / INT16_MAX,
+    [BMI088_GYRO_RANGE_1000] = 1000.0f / INT16_MAX,
+    [BMI088_GYRO_RANGE_500] = 500.0f / INT16_MAX,
+    [BMI088_GYRO_RANGE_250] = 250.0f / INT16_MAX,
+    [BMI088_GYRO_RANGE_125] = 1250.0f / INT16_MAX,
+};
+
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
@@ -151,6 +159,33 @@ FC_Status_t BMI088_Read_IMU_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_dat
     imu_data->ax = (float) ax_lsb * acc_range;
     imu_data->ay = (float) ay_lsb * acc_range;
     imu_data->az = (float) az_lsb * acc_range;
+
+    return FC_OK;
+}
+
+FC_Status_t BMI088_Read_IMU_Gyro(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data)
+{
+    if (bmi088 == NULL || imu_data == NULL) return FC_NULL_PTR_ERR;
+
+    // Data should be able to hold accel LSB and MSB parts
+    uint8_t data[6];
+    const FC_Status_t status = BMI088_Gyro_BurstReadData(bmi088, data);
+    if ( status != FC_OK ) return status;
+
+    // Join values MSB and LSB
+    const int16_t gx_lsb = (int16_t) ((uint16_t) data[1] << 8 | data[0]);
+    const int16_t gy_lsb = (int16_t) ((uint16_t) data[3] << 8 | data[2]);
+    const int16_t gz_lsb = (int16_t) ((uint16_t) data[5] << 8 | data[4]);
+
+    // Checking gyro_range is valid
+    if (bmi088->settings.gyro_range >= sizeof(gyro_range_conversion)/sizeof(gyro_range_conversion[0])) return FC_CONFIG_ERR;
+
+    // Get conversion rate for deg/s
+    const float gyro_range = gyro_range_conversion[bmi088->settings.gyro_range];
+
+    imu_data->gx = (float) gx_lsb * gyro_range;
+    imu_data->gy = (float) gy_lsb * gyro_range;
+    imu_data->gz = (float) gz_lsb * gyro_range;
 
     return FC_OK;
 }
