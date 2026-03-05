@@ -84,6 +84,8 @@ FC_Status_t BMI088_Init(const BMI088_t *bmi088)
     // Initialized buffers
     memset(accel_tx_dma, 0, sizeof(accel_tx_dma));
     memset(accel_rx_dma, 0, sizeof(accel_rx_dma));
+    memset(gyro_tx_dma, 0, sizeof(gyro_tx_dma));
+    memset(gyro_rx_dma, 0, sizeof(gyro_rx_dma));
 
     // Initialized Accelerator
     status = BMI088_Accel_Init(bmi088);
@@ -293,7 +295,8 @@ static FC_Status_t BMI088_Gyro_Config(const BMI088_t *bmi088)
     uint8_t read_conf = 0;
     status = BMI088_Gyro_ReadRegister(bmi088, BMI088_GYRO_REG_BANDWIDTH, &read_conf);
     if (status != FC_OK) return status;
-    if (read_conf != bandwidth) return FC_CONFIG_ERR;
+    // Bit #7 is read-only and always 1, has no functionality so we ignore it to match
+    if ((read_conf & ~0x80) != bandwidth) return FC_CONFIG_ERR;
 
     status = BMI088_Gyro_ReadRegister(bmi088, BMI088_GYRO_REG_RANGE, &read_conf);
     if (status != FC_OK) return status;
