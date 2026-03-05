@@ -57,7 +57,7 @@ static const float gyro_range_conversion[] = {
     [BMI088_GYRO_RANGE_1000] = 1000.0f / INT16_MAX,
     [BMI088_GYRO_RANGE_500] = 500.0f / INT16_MAX,
     [BMI088_GYRO_RANGE_250] = 250.0f / INT16_MAX,
-    [BMI088_GYRO_RANGE_125] = 1250.0f / INT16_MAX,
+    [BMI088_GYRO_RANGE_125] = 125.0f / INT16_MAX,
 };
 
 /* =========================================================================
@@ -180,7 +180,7 @@ FC_Status_t BMI088_Read_IMU_Gyro(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data
 {
     if (bmi088 == NULL || imu_data == NULL) return FC_NULL_PTR_ERR;
 
-    // Data should be able to hold accel LSB and MSB parts
+    // Data should be able to hold gyro LSB and MSB parts
     uint8_t data[6];
     const FC_Status_t status = BMI088_Gyro_BurstReadData(bmi088, data);
     if ( status != FC_OK ) return status;
