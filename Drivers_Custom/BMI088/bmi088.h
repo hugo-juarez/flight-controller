@@ -75,6 +75,18 @@ typedef enum
     BMI088_ACCEL_RANGE_12 = 0x02,
     BMI088_ACCEL_RANGE_24 = 0x03,
 } BMI088_Accel_Range_t;
+
+typedef enum
+{
+    BMI088_GYRO_REG_CHIP_ID = 0x00,
+    BMI088_GYRO_REG_X_LSB = 0x02,
+    BMI088_GYRO_REG_Y_LSB = 0x04,
+    BMI088_GYRO_REG_Z_LSB = 0x06,
+    BMI088_GYRO_REG_RANGE = 0x0F,
+    BMI088_GYRO_REG_BANDWIDTH = 0x10,
+    BMI088_GYRO_REG_LPM1 = 0x11,
+    BMI088_GYRO_REG_SOFTRESET = 0x14,
+} BMI088_Gyro_Reg_t;
 /* =========================================================================
 * Structs
 * ========================================================================= */
