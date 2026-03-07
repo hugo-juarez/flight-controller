@@ -54,6 +54,7 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 static FC_Hw_t hw = {
   .hspi_imu = &hspi1,
+  .huart_gps = &huart2,
 };
 /* USER CODE END PV */
 

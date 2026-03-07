@@ -48,6 +48,7 @@ typedef struct
 {
     SPI_HandleTypeDef       *hspi_imu;
     UART_HandleTypeDef      *huart_crsf;
+    UART_HandleTypeDef      *huart_gps;
     FC_IMU_Data_t           accel_data;
 } FC_Hw_t;
 
