@@ -39,9 +39,6 @@ FC_Status_t app_init(FC_Hw_t *hw)
     status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)hw, TASK_PRI_IMU, NULL);
     if (status != pdPASS) return FC_ERR;
 
-    status = xTaskCreate(task_crsf, "CRSF Task", STACK_CRSF, (void*)hw, TASK_PRI_CRSF, NULL);
-    if (status != pdPASS) return FC_ERR;
-
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
     if (status != pdPASS) return FC_ERR;
 

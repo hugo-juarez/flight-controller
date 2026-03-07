@@ -24,8 +24,13 @@ void task_crsf(void *params)
 {
     FC_Hw_t *hw = (FC_Hw_t *)params;
 
+    uint8_t data[64];
+
+    UNUSED(hw);
+    UNUSED(data);
+
     while (1)
     {
-        
+
     }
 }
