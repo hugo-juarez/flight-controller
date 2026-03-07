@@ -1,5 +1,6 @@
 set(DRIVERS_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/BMI088/bmi088.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/BN880/bn880.c
 )
 
 add_library(drivers STATIC
