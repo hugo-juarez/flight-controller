@@ -26,6 +26,7 @@
 #include <task.h>
 #include "task_imu.h"
 #include "task_crsf.h"
+#include "task_navigation.h"
 #include "task_monitor.h"
 #include "task_priorities.h"
 
@@ -37,6 +38,9 @@ FC_Status_t app_init(FC_Hw_t *hw)
     BaseType_t status = pdFAIL;
 
     status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)hw, TASK_PRI_IMU, NULL);
+    if (status != pdPASS) return FC_ERR;
+
+    status = xTaskCreate(task_navigation, "NAV Task", STACK_NAVIGATION, (void*)hw, TASK_PRI_NAVIGATION, NULL);
     if (status != pdPASS) return FC_ERR;
 
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
