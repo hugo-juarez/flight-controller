@@ -26,20 +26,20 @@
 
 typedef struct
 {
-    uint16_t        sync_bytes;
+    uint8_t         sync_char_1;
+    uint8_t         sync_char_2;
     uint8_t         class;
     uint8_t         id;
     uint16_t        length; // Little Endian
     uint8_t         *payload;
-    uint16_t        ubx_checksum;
 } PACKED BN880_UBX_Msg_t;
 
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
-static void BN880_UBX_Convert_Payload(uint16_t *payload, uint8_t len);
-static uint16_t BN880_UBX_Checksum(uint8_t *payload, uint8_t len);
+static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg);
+static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
 /* =========================================================================
 * Public APIs
@@ -79,42 +79,81 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
      * [2]: timeRef = 1 (GPS time) */
     uint16_t payload_rate[3] = {100, 1, 1};
 
-    // Converting payload into little endian acceptable for UBX
-    BN880_UBX_Convert_Payload(payload_rate, 3);
-
-    const BN880_UBX_Msg_t ubx_msg = {
-        .sync_bytes = 0xB562,
+    BN880_UBX_Msg_t ubx_msg = {
+        .sync_char_1 = 0xB5,
+        .sync_char_2 = 0x62,
         .class = 0x06,
         .id = 0x08,
-        .length = __builtin_bswap16(6),
+        .length = 6,
         .payload = (uint8_t*) payload_rate,
-        .ubx_checksum = BN880_UBX_Checksum((uint8_t*)payload_rate, 6),
     };
 
-    // Sending measure rate config message
-    if ( HAL_UART_Transmit(bn880->config.uart, (uint8_t*) &ubx_msg, sizeof(BN880_UBX_Msg_t), 1000) != HAL_OK ) return FC_UART_ERR;
+    FC_Status_t status = BN880_UBX_SendMessage(bn880, &ubx_msg);
+    if (status != FC_OK) return status;
 
-    
+    // Configure messages send through UBX
+
+    /* The parameters passed are the following to send the message to UBX-CFG-MSG
+     * [0]: msgClass = 0x01 (NAV class)
+     * [1]: msgId = 0x07 (NAV-PVT message) */
+    uint8_t payload_cfg_msg[2] = {0x01, 0x07};
+
+    BN880_UBX_Msg_t ubx_cfg_msg = {
+        .sync_char_1 = 0xB5,
+        .sync_char_2 = 0x62,
+        .class = 0x06,
+        .id = 0x01,
+        .length = 2,
+        .payload = payload_cfg_msg,
+    };
+
+    status = BN880_UBX_SendMessage(bn880, &ubx_cfg_msg);
+    if (status != FC_OK) return status;
 
     return FC_OK;
 }
 
-static void BN880_UBX_Convert_Payload(uint16_t *payload, const uint8_t len)
+static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg)
 {
-    for (size_t i = 0; i < len; i++)
+
+    // Sum of uint8_t bytes of UBX message plus the length
+    const uint8_t msg_length = 8 + msg->length;
+
+    // Load message
+    uint8_t uart_msg[msg_length];
+
+    uart_msg[0] = msg->sync_char_1;
+    uart_msg[1] = msg->sync_char_2;
+    uart_msg[2] = msg->class;
+    uart_msg[3] = msg->id;
+    uart_msg[4] = msg->length;
+    uart_msg[5] = msg->length >> 8;
+
+    for (size_t i = 0; i < msg->length; i++)
     {
-        payload[i] = __builtin_bswap16(payload[i]);
+        uart_msg[6 + i] = msg->payload[i];
     }
+
+    // Adding Checksum of all the bytes minus the checksum bytes and sync chars
+    const uint16_t ubx_checksum = BN880_UBX_Checksum(&uart_msg[2], msg_length - 4);
+
+    uart_msg[msg_length - 2] = ubx_checksum >> 8;
+    uart_msg[msg_length - 1] = ubx_checksum;
+
+    // Send message
+    if ( HAL_UART_Transmit(bn880->config.uart, uart_msg, msg_length, 1000) != HAL_OK ) return FC_UART_ERR;
+
+    return FC_OK;
 }
 
-static uint16_t BN880_UBX_Checksum(uint8_t *payload, const uint8_t len)
+static uint16_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
 {
     uint8_t ck_a = 0;
     uint8_t ck_b = 0;
 
     for (size_t i = 0; i < len; i++)
     {
-        ck_a = ck_a + payload[i];
+        ck_a = ck_a + msg[i];
         ck_b = ck_b + ck_a;
     }
 
