@@ -31,6 +31,7 @@ typedef enum
     FC_ERR,
     FC_NULL_PTR_ERR,
     FC_SPI_ERR,
+    FC_UART_ERR,
     FC_CONFIG_ERR,
     FC_ERR_TIMEOUT,
 } FC_Status_t;
