@@ -22,6 +22,11 @@
 #include "stm32f7xx_hal.h"
 
 /* =========================================================================
+* Macros
+* ========================================================================= */
+#define PACKED      __attribute__((packed))
+
+/* =========================================================================
 * Enums
 * ========================================================================= */
 
@@ -50,6 +55,7 @@ typedef struct
     SPI_HandleTypeDef       *hspi_imu;
     UART_HandleTypeDef      *huart_crsf;
     UART_HandleTypeDef      *huart_gps;
+    UART_HandleTypeDef      *huart_print;
     FC_IMU_Data_t           accel_data;
 } FC_Hw_t;
 
