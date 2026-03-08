@@ -35,11 +35,14 @@ void task_navigation(void *params)
         .config = config,
     };
 
+    // 1s Delay before starting to grab useful data
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
     FC_Status_t status = BN880_Init(&bn880);
     configASSERT(status == FC_OK);
 
     while (1)
     {
-
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
