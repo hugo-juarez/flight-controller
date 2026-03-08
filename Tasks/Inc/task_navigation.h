@@ -18,6 +18,9 @@
 #ifndef FLIGHT_CONTROLLER_TASK_NAVIGATION_H
 #define FLIGHT_CONTROLLER_TASK_NAVIGATION_H
 
-
+/* =========================================================================
+* Public APIs
+* ========================================================================= */
+void task_navigation(void *params);
 
 #endif //FLIGHT_CONTROLLER_TASK_NAVIGATION_H

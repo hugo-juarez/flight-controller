@@ -15,3 +15,31 @@
 * @copyright Copyright (c) 2026 Hugo Juarez. Licensed under the MIT License.
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
+#include "task_navigation.h"
+#include "fc_types.h"
+#include "BMI088/bmi088.h"
+#include "BN880/bn880.h"
+
+/* =========================================================================
+* Public APIs
+* ========================================================================= */
+void task_navigation(void *params)
+{
+    FC_Hw_t *hw = (FC_Hw_t *)params;
+
+    const BN880_Config_t config = {
+        .uart = hw->huart_gps,
+    };
+
+    BN880_t bn880 = {
+        .config = config,
+    };
+
+    FC_Status_t status = BN880_Init(&bn880);
+    configASSERT(status == FC_OK);
+
+    while (1)
+    {
+
+    }
+}
