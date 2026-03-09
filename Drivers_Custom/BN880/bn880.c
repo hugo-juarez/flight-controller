@@ -18,7 +18,8 @@
 * ========================================================================= */
 #include "bn880.h"
 #include <string.h>
-
+#include <FreeRTOS.h>
+#include <task.h>
 
 /* =========================================================================
 * Private Function Structs
@@ -66,6 +67,9 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 
     if ( HAL_UART_Transmit(bn880->config.uart, (uint8_t*)cmd, strlen(cmd), 1000) != HAL_OK ) return FC_UART_ERR;
 
+    // Wait for module to switch
+    vTaskDelay(pdMS_TO_TICKS(200));
+
     // Change baud rate to be able to get data from
     if ( HAL_UART_DeInit(bn880->config.uart) != HAL_OK ) return FC_UART_ERR;
     bn880->config.uart->Init.BaudRate = 115200;
@@ -95,15 +99,16 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 
     /* The parameters passed are the following to send the message to UBX-CFG-MSG
      * [0]: msgClass = 0x01 (NAV class)
-     * [1]: msgId = 0x07 (NAV-PVT message) */
-    uint8_t payload_cfg_msg[2] = {0x01, 0x07};
+     * [1]: msgId = 0x07 (NAV-PVT message)
+     * [3]: rate = 0x01 (Send NAV every 10Hz) */
+    uint8_t payload_cfg_msg[3] = {0x01, 0x07, 0x01};
 
     BN880_UBX_Msg_t ubx_cfg_msg = {
         .sync_char_1 = 0xB5,
         .sync_char_2 = 0x62,
         .class = 0x06,
         .id = 0x01,
-        .length = 2,
+        .length = 3,
         .payload = payload_cfg_msg,
     };
 
