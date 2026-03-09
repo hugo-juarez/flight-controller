@@ -123,8 +123,8 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg)
 {
 
-    // Sum of uint8_t bytes of UBX message plus the length
-    const uint8_t msg_length = 8 + msg->length;
+    // Sum of uint16_t bytes of UBX message plus the length
+    const uint16_t msg_length = 8 + msg->length;
 
     // Load message
     uint8_t uart_msg[msg_length];
