@@ -29,7 +29,7 @@ typedef struct
 {
     uint8_t         sync_char_1;
     uint8_t         sync_char_2;
-    uint8_t         class;
+    uint8_t         msg_class;
     uint8_t         id;
     uint16_t        length; // Little Endian
     uint8_t         *payload;
@@ -86,7 +86,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     BN880_UBX_Msg_t ubx_msg = {
         .sync_char_1 = 0xB5,
         .sync_char_2 = 0x62,
-        .class = 0x06,
+        .msg_class = 0x06,
         .id = 0x08,
         .length = 6,
         .payload = (uint8_t*) payload_rate,
@@ -106,7 +106,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     BN880_UBX_Msg_t ubx_cfg_msg = {
         .sync_char_1 = 0xB5,
         .sync_char_2 = 0x62,
-        .class = 0x06,
+        .msg_class = 0x06,
         .id = 0x01,
         .length = 3,
         .payload = payload_cfg_msg,
@@ -129,7 +129,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *
 
     uart_msg[0] = msg->sync_char_1;
     uart_msg[1] = msg->sync_char_2;
-    uart_msg[2] = msg->class;
+    uart_msg[2] = msg->msg_class;
     uart_msg[3] = msg->id;
     uart_msg[4] = msg->length;
     uart_msg[5] = msg->length >> 8;
