@@ -31,7 +31,7 @@ typedef struct
     uint8_t         id;
     uint16_t        length; // Little Endian
     uint8_t         *payload;
-} PACKED BN880_UBX_Msg_t;
+} __attribute__((packed)) BN880_UBX_Msg_t;
 
 /* =========================================================================
 * Private Function Prototypes
