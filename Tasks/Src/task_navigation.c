@@ -31,8 +31,15 @@ void task_navigation(void *params)
         .uart = hw->huart_gps,
     };
 
+    const BN880_Settings_t settings = {
+        .rate = BN880_GPS_RATE_10HZ,
+        .nav_rate = 1,
+        .time_format = BN880_GPS_TIME_GPS,
+    };
+
     BN880_t bn880 = {
         .config = config,
+        .settings = settings,
     };
 
     // 1s Delay before starting to grab useful data

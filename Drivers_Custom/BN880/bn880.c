@@ -27,8 +27,6 @@
 
 typedef struct
 {
-    uint8_t         sync_char_1;
-    uint8_t         sync_char_2;
     uint8_t         msg_class;
     uint8_t         id;
     uint16_t        length; // Little Endian
@@ -78,17 +76,19 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     // Configure change of rate from 1Hz to 10Hz
 
     /* The parameters passed are the following to send the message to CFG-Rate
-     * [0]: measRate in ms = 100ms = 10Hz
-     * [1]: navRate = 1 ( 1 measurement per navigation solution)
-     * [2]: timeRef = 1 (GPS time) */
-    uint16_t payload_rate[3] = {100, 1, 1};
+     * [0]: measRate in ms
+     * [1]: navRate ( 1 measurement per navigation solution)
+     * [2]: timeRef (GPS time) */
+    const uint16_t payload_rate[3] = {
+        bn880->settings.rate,
+        bn880->settings.nav_rate,
+        bn880->settings.time_format,
+    };
 
     BN880_UBX_Msg_t ubx_msg = {
-        .sync_char_1 = 0xB5,
-        .sync_char_2 = 0x62,
-        .msg_class = 0x06,
-        .id = 0x08,
-        .length = 6,
+        .msg_class = BN880_UBX_CLASS_RATE,
+        .id = BN880_UBX_ID_RATE,
+        .length = BN880_UBX_LEN_RATE,
         .payload = (uint8_t*) payload_rate,
     };
 
@@ -98,17 +98,19 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     // Configure messages send through UBX
 
     /* The parameters passed are the following to send the message to UBX-CFG-MSG
-     * [0]: msgClass = 0x01 (NAV class)
-     * [1]: msgId = 0x07 (NAV-PVT message)
-     * [3]: rate = 0x01 (Send NAV every 10Hz) */
-    uint8_t payload_cfg_msg[3] = {0x01, 0x07, 0x01};
+     * [0]: msgClass (NAV class)
+     * [1]: msgId (NAV-PVT message)
+     * [3]: rate (Send NAV every 10Hz) */
+    uint8_t payload_cfg_msg[3] = {
+        BN880_UBX_CLASS_NAV_PVT,
+        BN880_UBX_ID_NAV_PVT,
+        bn880->settings.nav_rate
+    };
 
     BN880_UBX_Msg_t ubx_cfg_msg = {
-        .sync_char_1 = 0xB5,
-        .sync_char_2 = 0x62,
-        .msg_class = 0x06,
-        .id = 0x01,
-        .length = 3,
+        .msg_class = BN880_UBX_CLASS_CFG,
+        .id = BN880_UBX_ID_CFG,
+        .length = BN880_UBX_LEN_CFG,
         .payload = payload_cfg_msg,
     };
 
@@ -127,8 +129,8 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *
     // Load message
     uint8_t uart_msg[msg_length];
 
-    uart_msg[0] = msg->sync_char_1;
-    uart_msg[1] = msg->sync_char_2;
+    uart_msg[0] = BN880_UBX_SYNC_1;
+    uart_msg[1] = BN880_UBX_SYNC_2;
     uart_msg[2] = msg->msg_class;
     uart_msg[3] = msg->id;
     uart_msg[4] = msg->length;

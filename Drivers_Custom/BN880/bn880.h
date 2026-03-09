@@ -25,6 +25,34 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
+#define BN880_UBX_SYNC_1            0xB5
+#define BN880_UBX_SYNC_2            0x62
+#define BN880_UBX_CLASS_CFG         0x06
+#define BN880_UBX_ID_CFG            0x01
+#define BN880_UBX_LEN_CFG           3
+#define BN880_UBX_CLASS_RATE        0x06
+#define BN880_UBX_ID_RATE           0x08
+#define BN880_UBX_LEN_RATE          6
+#define BN880_UBX_CLASS_NAV_PVT     0x01
+#define BN880_UBX_ID_NAV_PVT        0x07
+
+/* =========================================================================
+* Enums
+* ========================================================================= */
+typedef enum
+{
+    BN880_GPS_RATE_1HZ = 1000,
+    BN880_GPS_RATE_10HZ = 100,
+} BN880_GPS_Rate_t;
+
+typedef enum
+{
+    BN880_GPS_TIME_UTC = 0,
+    BN880_GPS_TIME_GPS = 1,
+    BN880_GPS_TIME_GLONASS = 2,
+    BN880_GPS_TIME_BEIDOU = 3,
+    BN880_GPS_TIME_GALILEO = 4,
+} BN880_GPS_Time_t;
 
 /* =========================================================================
 * Structs
@@ -37,7 +65,15 @@ typedef struct
 
 typedef struct
 {
+    BN880_GPS_Rate_t    rate;
+    uint16_t            nav_rate;
+    BN880_GPS_Time_t    time_format;
+} BN880_Settings_t;
+
+typedef struct
+{
     BN880_Config_t      config;
+    BN880_Settings_t    settings;
 } BN880_t;
 
 /* =========================================================================
