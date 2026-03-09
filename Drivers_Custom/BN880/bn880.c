@@ -54,7 +54,7 @@ FC_Status_t BN880_Init(BN880_t *bn880)
 }
 
 /* =========================================================================
-* Private Function Prototypes
+* Private Function
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 {
@@ -123,11 +123,13 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg)
 {
 
+    if (msg->length > BN880_UBX_MAX_PAYLOAD) return FC_ERR;
+
     // Sum of uint16_t bytes of UBX message plus the length
     const uint16_t msg_length = 8 + msg->length;
-
+    
     // Load message
-    uint8_t uart_msg[msg_length];
+    uint8_t uart_msg[BN880_UBX_MAX_MSG_LEN];
 
     uart_msg[0] = BN880_UBX_SYNC_1;
     uart_msg[1] = BN880_UBX_SYNC_2;
@@ -164,5 +166,5 @@ static uint16_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
         ck_b = ck_b + ck_a;
     }
 
-    return ck_a << 8 | ck_b;
+    return (uint16_t)(ck_a) << 8 | ck_b;
 }

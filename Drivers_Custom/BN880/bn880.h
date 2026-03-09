@@ -25,6 +25,8 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
+#define BN880_UBX_MAX_PAYLOAD       172
+#define BN880_UBX_MAX_MSG_LEN       (172 + 8)
 #define BN880_UBX_SYNC_1            0xB5
 #define BN880_UBX_SYNC_2            0x62
 #define BN880_UBX_CLASS_CFG         0x06
