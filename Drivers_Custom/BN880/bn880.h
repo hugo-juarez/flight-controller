@@ -26,7 +26,7 @@
 * Macros
 * ========================================================================= */
 #define BN880_UBX_MAX_PAYLOAD       172
-#define BN880_UBX_MAX_MSG_LEN       (172 + 8)
+#define BN880_UBX_MAX_MSG_LEN       (BN880_UBX_MAX_PAYLOAD + 8)
 #define BN880_UBX_SYNC_1            0xB5
 #define BN880_UBX_SYNC_2            0x62
 #define BN880_UBX_CLASS_CFG         0x06
@@ -81,7 +81,7 @@ typedef struct
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-FC_Status_t BN880_Init(BN880_t *bn880);
+FC_Status_t BN880_Init(const BN880_t *bn880);
 
 
 #endif //FLIGHT_CONTROLLER_BN880_H

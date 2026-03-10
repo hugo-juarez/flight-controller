@@ -36,14 +36,14 @@ typedef struct
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
-static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
-static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg);
+static FC_Status_t BN880_GPS_Init(const BN880_t *bn880);
+static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
 static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-FC_Status_t BN880_Init(BN880_t *bn880)
+FC_Status_t BN880_Init(const BN880_t *bn880)
 {
 
     // Initialize GPS module of BN880
@@ -56,7 +56,7 @@ FC_Status_t BN880_Init(BN880_t *bn880)
 /* =========================================================================
 * Private Function
 * ========================================================================= */
-static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
+static FC_Status_t BN880_GPS_Init(const BN880_t *bn880)
 {
     /* This command mask the NMEA output and only allow UBX outputs. (0001)
      *  It also masks the input in a way that only NMEA and UBX inputs are allowed. (0003)
@@ -85,7 +85,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
         bn880->settings.time_format,
     };
 
-    BN880_UBX_Msg_t ubx_msg = {
+    const BN880_UBX_Msg_t ubx_msg = {
         .msg_class = BN880_UBX_CLASS_RATE,
         .id = BN880_UBX_ID_RATE,
         .length = BN880_UBX_LEN_RATE,
@@ -107,7 +107,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
         bn880->settings.nav_rate
     };
 
-    BN880_UBX_Msg_t ubx_cfg_msg = {
+    const BN880_UBX_Msg_t ubx_cfg_msg = {
         .msg_class = BN880_UBX_CLASS_CFG,
         .id = BN880_UBX_ID_CFG,
         .length = BN880_UBX_LEN_CFG,
@@ -120,7 +120,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     return FC_OK;
 }
 
-static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, BN880_UBX_Msg_t *msg)
+static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg)
 {
 
     if (msg->length > BN880_UBX_MAX_PAYLOAD) return FC_ERR;
