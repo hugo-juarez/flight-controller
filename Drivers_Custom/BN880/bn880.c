@@ -22,7 +22,7 @@
 #include <task.h>
 
 /* =========================================================================
-* Private Function Structs
+* Private Structs
 * ========================================================================= */
 
 typedef struct
@@ -36,14 +36,14 @@ typedef struct
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
-static FC_Status_t BN880_GPS_Init(const BN880_t *bn880);
+static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
 static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-FC_Status_t BN880_Init(const BN880_t *bn880)
+FC_Status_t BN880_Init(BN880_t *bn880)
 {
 
     // Initialize GPS module of BN880
@@ -56,7 +56,7 @@ FC_Status_t BN880_Init(const BN880_t *bn880)
 /* =========================================================================
 * Private Function
 * ========================================================================= */
-static FC_Status_t BN880_GPS_Init(const BN880_t *bn880)
+static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 {
     /* This command mask the NMEA output and only allow UBX outputs. (0001)
      *  It also masks the input in a way that only NMEA and UBX inputs are allowed. (0003)
@@ -68,7 +68,7 @@ static FC_Status_t BN880_GPS_Init(const BN880_t *bn880)
     // Wait for module to switch
     vTaskDelay(pdMS_TO_TICKS(200));
 
-    // Change baud rate to be able to get data from
+    // Change baud rate to be able to get one specified above
     if ( HAL_UART_DeInit(bn880->config.uart) != HAL_OK ) return FC_UART_ERR;
     bn880->config.uart->Init.BaudRate = 115200;
     if ( HAL_UART_Init(bn880->config.uart) != HAL_OK ) return FC_UART_ERR;
@@ -80,9 +80,9 @@ static FC_Status_t BN880_GPS_Init(const BN880_t *bn880)
      * [1]: navRate ( 1 measurement per navigation solution)
      * [2]: timeRef (GPS time) */
     const uint16_t payload_rate[3] = {
-        bn880->settings.rate,
-        bn880->settings.nav_rate,
-        bn880->settings.time_format,
+        bn880->period,
+        BN880_GPS_NAV_RATE,
+        bn880->time_format,
     };
 
     const BN880_UBX_Msg_t ubx_msg = {
@@ -100,11 +100,11 @@ static FC_Status_t BN880_GPS_Init(const BN880_t *bn880)
     /* The parameters passed are the following to send the message to UBX-CFG-MSG
      * [0]: msgClass (NAV class)
      * [1]: msgId (NAV-PVT message)
-     * [3]: rate (Send NAV every 10Hz) */
+     * [2]: rate (Send NAV every 10Hz) */
     uint8_t payload_cfg_msg[3] = {
         BN880_UBX_CLASS_NAV_PVT,
         BN880_UBX_ID_NAV_PVT,
-        bn880->settings.nav_rate
+        BN880_GPS_NAV_RATE
     };
 
     const BN880_UBX_Msg_t ubx_cfg_msg = {

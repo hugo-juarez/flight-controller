@@ -25,6 +25,7 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
+#define BN880_GPS_NAV_RATE          1
 #define BN880_UBX_MAX_PAYLOAD       172
 #define BN880_UBX_MAX_MSG_LEN       (BN880_UBX_MAX_PAYLOAD + 8)
 #define BN880_UBX_SYNC_1            0xB5
@@ -43,9 +44,9 @@
 * ========================================================================= */
 typedef enum
 {
-    BN880_GPS_RATE_1HZ = 1000,
-    BN880_GPS_RATE_10HZ = 100,
-} BN880_GPS_Rate_t;
+    BN880_GPS_PERIOD_1HZ = 1000,
+    BN880_GPS_PERIOD_10HZ = 100,
+} BN880_GPS_MeasRate_t;
 
 typedef enum
 {
@@ -61,27 +62,21 @@ typedef enum
 * ========================================================================= */
 typedef struct
 {
-    UART_HandleTypeDef      *uart;
-    I2C_HandleTypeDef       *i2c;
+    UART_HandleTypeDef          *uart;
+    I2C_HandleTypeDef           *i2c;
 } BN880_Config_t;
 
 typedef struct
 {
-    BN880_GPS_Rate_t    rate;
-    uint16_t            nav_rate;
-    BN880_GPS_Time_t    time_format;
-} BN880_Settings_t;
-
-typedef struct
-{
-    BN880_Config_t      config;
-    BN880_Settings_t    settings;
+    BN880_Config_t              config;
+    BN880_GPS_MeasRate_t        period;
+    BN880_GPS_Time_t            time_format;
 } BN880_t;
 
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
-FC_Status_t BN880_Init(const BN880_t *bn880);
+FC_Status_t BN880_Init(BN880_t *bn880);
 
 
 #endif //FLIGHT_CONTROLLER_BN880_H
