@@ -25,17 +25,17 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
-#define BN880_GPS_NAV_RATE          1
-#define BN880_UBX_MAX_PAYLOAD       172
-#define BN880_UBX_MAX_MSG_LEN       (BN880_UBX_MAX_PAYLOAD + 8)
+#define BN880_GPS_NAV_RATE          1U
+#define BN880_UBX_MAX_PAYLOAD       172U
+#define BN880_UBX_MAX_MSG_LEN       (BN880_UBX_MAX_PAYLOAD + 8U)
 #define BN880_UBX_SYNC_1            0xB5
 #define BN880_UBX_SYNC_2            0x62
 #define BN880_UBX_CLASS_CFG         0x06
 #define BN880_UBX_ID_CFG            0x01
-#define BN880_UBX_LEN_CFG           3
+#define BN880_UBX_LEN_CFG           3U
 #define BN880_UBX_CLASS_RATE        0x06
 #define BN880_UBX_ID_RATE           0x08
-#define BN880_UBX_LEN_RATE          6
+#define BN880_UBX_LEN_RATE          6U
 #define BN880_UBX_CLASS_NAV_PVT     0x01
 #define BN880_UBX_ID_NAV_PVT        0x07
 
