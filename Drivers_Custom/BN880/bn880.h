@@ -19,8 +19,10 @@
 #ifndef FLIGHT_CONTROLLER_BN880_H
 #define FLIGHT_CONTROLLER_BN880_H
 
-#include "fc_types.h"
+#include <FreeRTOS.h>
+#include <task.h>
 #include "stm32f7xx_hal.h"
+#include "fc_types.h"
 
 /* =========================================================================
 * Macros
@@ -62,6 +64,7 @@ typedef enum
 * ========================================================================= */
 typedef struct
 {
+    TaskHandle_t                task_handle;
     UART_HandleTypeDef          *uart;
     I2C_HandleTypeDef           *i2c;
 } BN880_Config_t;

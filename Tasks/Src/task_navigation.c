@@ -28,6 +28,7 @@ void task_navigation(void *params)
     FC_Hw_t *hw = (FC_Hw_t *)params;
 
     const BN880_Config_t config = {
+        .task_handle = xTaskGetCurrentTaskHandle(),
         .uart = hw->huart_gps,
     };
 
