@@ -28,8 +28,9 @@
 * Macros
 * ========================================================================= */
 #define BN880_GPS_NAV_RATE          1U
-#define BN880_UBX_MAX_PAYLOAD       172U
-#define BN880_UBX_MAX_MSG_LEN       (BN880_UBX_MAX_PAYLOAD + 8U)
+#define BN880_TASK_NOTIFY_INDEX     1
+#define BN880_UBX_MAX_PAYLOAD       128U
+#define BN880_UBX_MAX_MSG           14U
 #define BN880_UBX_SYNC_1            0xB5
 #define BN880_UBX_SYNC_2            0x62
 #define BN880_UBX_CLASS_CFG         0x06
@@ -81,5 +82,9 @@ typedef struct
 * ========================================================================= */
 FC_Status_t BN880_Init(BN880_t *bn880);
 
+/* =========================================================================
+* Callback APIs
+* ========================================================================= */
+void BN880_Idle_Callback(void);
 
 #endif //FLIGHT_CONTROLLER_BN880_H

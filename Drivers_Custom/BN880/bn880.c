@@ -18,8 +18,11 @@
 * ========================================================================= */
 #include "bn880.h"
 #include <string.h>
-#include <FreeRTOS.h>
-#include <task.h>
+
+/* =========================================================================
+* Private Global Variables
+* ========================================================================= */
+static TaskHandle_t gps_task_handle;
 
 /* =========================================================================
 * Private Structs
@@ -45,6 +48,10 @@ static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 * ========================================================================= */
 FC_Status_t BN880_Init(BN880_t *bn880)
 {
+    if (bn880 == NULL) return FC_ERR;
+
+    // Assign task hanlder to private variable
+    gps_task_handle = bn880->config.task_handle;
 
     // Initialize GPS module of BN880
     FC_Status_t status = BN880_GPS_Init(bn880);
@@ -129,7 +136,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     const uint16_t msg_length = 8 + msg->length;
     
     // Load message
-    uint8_t uart_msg[BN880_UBX_MAX_MSG_LEN];
+    uint8_t uart_msg[BN880_UBX_MAX_MSG];
 
     uart_msg[0] = BN880_UBX_SYNC_1;
     uart_msg[1] = BN880_UBX_SYNC_2;
