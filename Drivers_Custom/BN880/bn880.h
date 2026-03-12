@@ -27,20 +27,21 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
-#define BN880_GPS_NAV_RATE          1U
-#define BN880_TASK_NOTIFY_INDEX     1
-#define BN880_UBX_MAX_PAYLOAD       128U
-#define BN880_UBX_MAX_MSG           14U
-#define BN880_UBX_SYNC_1            0xB5
-#define BN880_UBX_SYNC_2            0x62
-#define BN880_UBX_CLASS_CFG         0x06
-#define BN880_UBX_ID_CFG            0x01
-#define BN880_UBX_LEN_CFG           3U
-#define BN880_UBX_CLASS_RATE        0x06
-#define BN880_UBX_ID_RATE           0x08
-#define BN880_UBX_LEN_RATE          6U
-#define BN880_UBX_CLASS_NAV_PVT     0x01
-#define BN880_UBX_ID_NAV_PVT        0x07
+#define BN880_GPS_NAV_RATE              1U
+#define BN880_TASK_RX_NOTIFY_INDEX      0
+#define BN880_TASK_TX_NOTIFY_INDEX      1
+#define BN880_UBX_MAX_RX_MSG            128U
+#define BN880_UBX_MAX_TX_MSG            6U
+#define BN880_UBX_SYNC_1                0xB5
+#define BN880_UBX_SYNC_2                0x62
+#define BN880_UBX_CLASS_CFG             0x06
+#define BN880_UBX_ID_CFG                0x01
+#define BN880_UBX_LEN_CFG               3U
+#define BN880_UBX_CLASS_RATE            0x06
+#define BN880_UBX_ID_RATE               0x08
+#define BN880_UBX_LEN_RATE              6U
+#define BN880_UBX_CLASS_NAV_PVT         0x01
+#define BN880_UBX_ID_NAV_PVT            0x07
 
 /* =========================================================================
 * Enums
@@ -85,6 +86,8 @@ FC_Status_t BN880_Init(BN880_t *bn880);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void BN880_Idle_Callback(void);
+void BN880_TxCmplt_Callback(void);
+void BN880_RxCmplt_Callback(void);
+void BN880_Error_Callback(UART_HandleTypeDef *huart);
 
 #endif //FLIGHT_CONTROLLER_BN880_H

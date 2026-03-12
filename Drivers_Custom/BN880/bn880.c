@@ -24,6 +24,14 @@
 * ========================================================================= */
 static TaskHandle_t gps_task_handle;
 
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t gps_tx_dma[BN880_UBX_MAX_TX_MSG + 8U];
+
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t gps_rx_dma[BN880_UBX_MAX_RX_MSG];
+
 /* =========================================================================
 * Private Structs
 * ========================================================================= */
@@ -130,34 +138,46 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg)
 {
 
-    if (msg->length > BN880_UBX_MAX_PAYLOAD) return FC_ERR;
+    if (msg->length > BN880_UBX_MAX_TX_MSG) return FC_ERR;
+
+    // DMA callback status
+    uint32_t cb_status = 0;
 
     // Sum of uint16_t bytes of UBX message plus the length
     const uint16_t msg_length = 8 + msg->length;
-    
-    // Load message
-    uint8_t uart_msg[BN880_UBX_MAX_MSG];
 
-    uart_msg[0] = BN880_UBX_SYNC_1;
-    uart_msg[1] = BN880_UBX_SYNC_2;
-    uart_msg[2] = msg->msg_class;
-    uart_msg[3] = msg->id;
-    uart_msg[4] = msg->length;
-    uart_msg[5] = msg->length >> 8;
+    gps_tx_dma[0] = BN880_UBX_SYNC_1;
+    gps_tx_dma[1] = BN880_UBX_SYNC_2;
+    gps_tx_dma[2] = msg->msg_class;
+    gps_tx_dma[3] = msg->id;
+    gps_tx_dma[4] = msg->length;
+    gps_tx_dma[5] = msg->length >> 8;
 
     for (size_t i = 0; i < msg->length; i++)
     {
-        uart_msg[6 + i] = msg->payload[i];
+        gps_tx_dma[6 + i] = msg->payload[i];
     }
 
     // Adding Checksum of all the bytes minus the checksum bytes and sync chars
-    const uint16_t ubx_checksum = BN880_UBX_Checksum(&uart_msg[2], msg_length - 4);
+    const uint16_t ubx_checksum = BN880_UBX_Checksum(&gps_tx_dma[2], msg_length - 4);
 
-    uart_msg[msg_length - 2] = ubx_checksum >> 8;
-    uart_msg[msg_length - 1] = ubx_checksum;
+    gps_tx_dma[msg_length - 2] = ubx_checksum >> 8;
+    gps_tx_dma[msg_length - 1] = ubx_checksum;
 
     // Send message
-    if ( HAL_UART_Transmit(bn880->config.uart, uart_msg, msg_length, 1000) != HAL_OK ) return FC_UART_ERR;
+    if ( HAL_UART_Transmit_DMA(bn880->config.uart, gps_tx_dma, msg_length) != HAL_OK ) return FC_UART_ERR;
+
+    // Wait for message to complete being sent
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    {
+        HAL_UART_AbortTransmit(bn880->config.uart);
+        return FC_UART_ERR;
+    }
+
+    if (cb_status != FC_OK)
+    {
+        return FC_ERR;
+    }
 
     return FC_OK;
 }
@@ -174,4 +194,38 @@ static uint16_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
     }
 
     return (uint16_t)(ck_a) << 8 | ck_b;
+}
+
+/* =========================================================================
+* Callback APIs
+* ========================================================================= */
+void BN880_TxCmplt_Callback(void)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_TX_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void BN880_Error_Callback(UART_HandleTypeDef *huart)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    uint32_t error = HAL_UART_GetError(huart);
+
+    if (error & (HAL_UART_ERROR_ORE | HAL_UART_ERROR_FE | HAL_UART_ERROR_NE  | HAL_UART_ERROR_PE | HAL_UART_ERROR_RTO))
+    {
+        // Rx Error
+        xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, FC_UART_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    } else if (error & HAL_UART_ERROR_DMA)
+    {
+        // Could be any DMA
+        if (huart->gState == HAL_UART_STATE_ERROR)
+        {
+            xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_TX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+        } else
+        {
+            xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+        }
+    }
+
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
