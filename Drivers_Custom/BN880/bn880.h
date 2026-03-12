@@ -32,6 +32,7 @@
 #define BN880_TASK_TX_NOTIFY_INDEX      1
 #define BN880_UBX_MAX_RX_MSG            128U
 #define BN880_UBX_MAX_TX_MSG            6U
+#define BN880_UBX_ACK_MSG_LEN           10U
 #define BN880_UBX_SYNC_1                0xB5
 #define BN880_UBX_SYNC_2                0x62
 #define BN880_UBX_CLASS_CFG             0x06
@@ -87,7 +88,7 @@ FC_Status_t BN880_Init(BN880_t *bn880);
 * Callback APIs
 * ========================================================================= */
 void BN880_TxCmplt_Callback(void);
-void BN880_RxCmplt_Callback(void);
+void BN880_RxCmplt_Callback(uint16_t size);
 void BN880_Error_Callback(UART_HandleTypeDef *huart);
 
 #endif //FLIGHT_CONTROLLER_BN880_H

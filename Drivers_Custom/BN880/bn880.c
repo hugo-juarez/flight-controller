@@ -23,6 +23,7 @@
 * Private Global Variables
 * ========================================================================= */
 static TaskHandle_t gps_task_handle;
+static uint16_t gps_dma_rx_read_pos = 0;
 
 __attribute__((section(".sram2")))
 __attribute__((aligned(32)))
@@ -88,6 +89,19 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     bn880->config.uart->Init.BaudRate = 115200;
     if ( HAL_UART_Init(bn880->config.uart) != HAL_OK ) return FC_UART_ERR;
 
+    // Initialized both DMA buffers
+    memset(gps_rx_dma, 0, sizeof(gps_rx_dma));
+    memset(gps_tx_dma, 0, sizeof(gps_tx_dma));
+
+    // Initialized Circular DMA receive message
+    HAL_UARTEx_ReceiveToIdle_DMA(bn880->config.uart, gps_rx_dma, BN880_UBX_MAX_RX_MSG);
+
+    // Disable interrupt from DMA Half anc Cmplt only Idle interrupt will trigger Ex_Event Callback
+    __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_HT);
+    __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_TC);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+    xTaskNotifyStateClearIndexed(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX);
     // Configure change of rate from 1Hz to 10Hz
 
     /* The parameters passed are the following to send the message to CFG-Rate
@@ -168,13 +182,51 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     if ( HAL_UART_Transmit_DMA(bn880->config.uart, gps_tx_dma, msg_length) != HAL_OK ) return FC_UART_ERR;
 
     // Wait for message to complete being sent
-    if ( xTaskNotifyWaitIndexed(BN880_TASK_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(2)) == pdFALSE)
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
     {
         HAL_UART_AbortTransmit(bn880->config.uart);
         return FC_UART_ERR;
     }
 
     if (cb_status != FC_OK)
+    {
+        return FC_ERR;
+    }
+
+    // Wait for acknowledge bit
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
+    {
+        HAL_UART_AbortTransmit(bn880->config.uart);
+        return FC_UART_ERR;
+    }
+
+    if ((cb_status & 0xFF) != FC_OK)
+    {
+        return FC_ERR;
+    }
+
+    // Check acknowledge message
+    uint8_t ack_msg[BN880_UBX_ACK_MSG_LEN];
+    uint16_t size = cb_status >> 8 & 0xFFFF;
+    uint16_t i = 0;
+
+    if (size != BN880_UBX_ACK_MSG_LEN)
+    {
+        return FC_ERR;
+    }
+
+    while (gps_dma_rx_read_pos != size)
+    {
+        ack_msg[i++] = gps_rx_dma[gps_dma_rx_read_pos];
+        gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
+    }
+
+    if (ack_msg[0] != 0xB5 || ack_msg[1] != 0x62)
+    {
+        return FC_ERR;
+    }
+
+    if (ack_msg[3] != 0x01)
     {
         return FC_ERR;
     }
@@ -203,6 +255,14 @@ void BN880_TxCmplt_Callback(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_TX_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void BN880_RxCmplt_Callback(uint16_t size)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    uint32_t value = size << 8 | FC_OK;
+    xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
