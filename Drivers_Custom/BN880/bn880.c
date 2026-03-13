@@ -57,7 +57,10 @@ static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 * ========================================================================= */
 FC_Status_t BN880_Init(BN880_t *bn880)
 {
-    if (bn880 == NULL) return FC_ERR;
+    if (bn880 == NULL)
+    {
+        return FC_ERR;
+    }
 
     // Assign task hanlder to private variable
     gps_task_handle = bn880->config.task_handle;
@@ -79,7 +82,10 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
      *  Finally it changes the baud-rate from the default 9600 to 115200. */
     const char* cmd = "$PUBX,41,1,0003,0001,115200,0*1E\r\n";
 
-    if ( HAL_UART_Transmit(bn880->config.uart, (uint8_t*)cmd, strlen(cmd), 1000) != HAL_OK ) return FC_UART_ERR;
+    if ( HAL_UART_Transmit(bn880->config.uart, (uint8_t*)cmd, strlen(cmd), 1000) != HAL_OK )
+    {
+        return FC_UART_ERR;
+    }
 
     // Wait for module to switch
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -97,7 +103,10 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     memset(gps_tx_dma, 0, sizeof(gps_tx_dma));
 
     // Initialized Circular DMA receive message
-    HAL_UARTEx_ReceiveToIdle_DMA(bn880->config.uart, gps_rx_dma, BN880_UBX_MAX_RX_MSG);
+    if ( HAL_UARTEx_ReceiveToIdle_DMA(bn880->config.uart, gps_rx_dma, BN880_UBX_MAX_RX_MSG) != HAL_OK)
+    {
+        return FC_UART_ERR;
+    };
 
     // Disable interrupt from DMA Half anc Cmplt only Idle interrupt will trigger Ex_Event Callback
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_HT);
@@ -180,12 +189,14 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     gps_tx_dma[msg_length - 1] = ubx_checksum;
 
     // Send message
-    if ( HAL_UART_Transmit_DMA(bn880->config.uart, gps_tx_dma, msg_length) != HAL_OK ) return FC_UART_ERR;
+    if ( HAL_UART_Transmit_DMA(bn880->config.uart, gps_tx_dma, msg_length) != HAL_OK )
+    {
+        return FC_UART_ERR;
+    }
 
     // Wait for message to complete being sent
     if ( xTaskNotifyWaitIndexed(BN880_TASK_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
     {
-        HAL_UART_AbortTransmit(bn880->config.uart);
         return FC_UART_ERR;
     }
 
@@ -197,7 +208,6 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     // Wait for acknowledge bit
     if ( xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
     {
-        HAL_UART_AbortTransmit(bn880->config.uart);
         return FC_UART_ERR;
     }
 
