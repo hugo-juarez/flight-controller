@@ -89,6 +89,9 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     bn880->config.uart->Init.BaudRate = 115200;
     if ( HAL_UART_Init(bn880->config.uart) != HAL_OK ) return FC_UART_ERR;
 
+    // Let baud generator and RX line settle
+    vTaskDelay(pdMS_TO_TICKS(2));
+
     // Initialized both DMA buffers
     memset(gps_rx_dma, 0, sizeof(gps_rx_dma));
     memset(gps_tx_dma, 0, sizeof(gps_tx_dma));
@@ -100,8 +103,6 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_HT);
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_TC);
 
-    vTaskDelay(pdMS_TO_TICKS(100));
-    xTaskNotifyStateClearIndexed(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX);
     // Configure change of rate from 1Hz to 10Hz
 
     /* The parameters passed are the following to send the message to CFG-Rate
@@ -210,18 +211,18 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     uint16_t size = cb_status >> 8 & 0xFFFF;
     uint16_t i = 0;
 
-    if (size != BN880_UBX_ACK_MSG_LEN)
-    {
-        return FC_ERR;
-    }
-
     while (gps_dma_rx_read_pos != size)
     {
+        if (i > BN880_UBX_ACK_MSG_LEN)
+        {
+            return FC_ERR;
+        }
+
         ack_msg[i++] = gps_rx_dma[gps_dma_rx_read_pos];
         gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
     }
 
-    if (ack_msg[0] != 0xB5 || ack_msg[1] != 0x62)
+    if (ack_msg[0] != BN880_UBX_SYNC_1 || ack_msg[1] != BN880_UBX_SYNC_2)
     {
         return FC_ERR;
     }
