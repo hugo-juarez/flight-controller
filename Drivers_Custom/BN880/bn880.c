@@ -45,12 +45,18 @@ typedef struct
     uint8_t         *payload;
 } BN880_UBX_Msg_t;
 
+typedef struct
+{
+    uint8_t         ck_a;
+    uint8_t         ck_b;
+} BN880_UBX_Checksum_t;
+
 /* =========================================================================
 * Private Function Prototypes
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
-static uint16_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
+static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
 /* =========================================================================
 * Public APIs
@@ -106,7 +112,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     if ( HAL_UARTEx_ReceiveToIdle_DMA(bn880->config.uart, gps_rx_dma, BN880_UBX_MAX_RX_MSG) != HAL_OK)
     {
         return FC_UART_ERR;
-    };
+    }
 
     // Disable interrupt from DMA Half anc Cmplt only Idle interrupt will trigger Ex_Event Callback
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_HT);
@@ -125,7 +131,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     };
 
     const BN880_UBX_Msg_t ubx_msg = {
-        .msg_class = BN880_UBX_CLASS_RATE,
+        .msg_class = BN880_UBX_CLASS_CFG,
         .id = BN880_UBX_ID_RATE,
         .length = BN880_UBX_LEN_RATE,
         .payload = (uint8_t*) payload_rate,
@@ -183,10 +189,10 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     }
 
     // Adding Checksum of all the bytes minus the checksum bytes and sync chars
-    const uint16_t ubx_checksum = BN880_UBX_Checksum(&gps_tx_dma[2], msg_length - 4);
+    const BN880_UBX_Checksum_t ubx_checksum = BN880_UBX_Checksum(&gps_tx_dma[2], msg_length - 4);
 
-    gps_tx_dma[msg_length - 2] = ubx_checksum >> 8;
-    gps_tx_dma[msg_length - 1] = ubx_checksum;
+    gps_tx_dma[msg_length - 2] = ubx_checksum.ck_a;
+    gps_tx_dma[msg_length - 1] = ubx_checksum.ck_b;
 
     // Send message
     if ( HAL_UART_Transmit_DMA(bn880->config.uart, gps_tx_dma, msg_length) != HAL_OK )
@@ -206,7 +212,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     }
 
     // Wait for acknowledge bit
-    if ( xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(20)) == pdFALSE)
     {
         return FC_UART_ERR;
     }
@@ -232,12 +238,28 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
         gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
     }
 
+    // Check Sync bytes are correct
     if (ack_msg[0] != BN880_UBX_SYNC_1 || ack_msg[1] != BN880_UBX_SYNC_2)
     {
         return FC_ERR;
     }
 
-    if (ack_msg[3] != 0x01)
+    // Check checksum matches with the one calculated / Not corrupt message
+    const BN880_UBX_Checksum_t ck_ack = BN880_UBX_Checksum(&ack_msg[2], BN880_UBX_ACK_MSG_LEN - 4);
+
+    if ( ack_msg[BN880_UBX_ACK_MSG_LEN - 2] != ck_ack.ck_a || ack_msg[BN880_UBX_ACK_MSG_LEN - 1] != ck_ack.ck_b )
+    {
+        return FC_ERR;
+    }
+
+    // Check message matches ACK message expected
+    if (ack_msg[2] != BN880_UBX_CLASS_ACK || ack_msg[3] != BN880_UBX_ID_ACK || ack_msg[4] != BN880_UBX_LEN_ACK || ack_msg[5] != BN880_UBX_LEN_ACK >> 8)
+    {
+        return FC_ERR;
+    }
+
+    // Check that is acknowledging the right message
+    if (ack_msg[6] != msg->msg_class || ack_msg[7] != msg->id)
     {
         return FC_ERR;
     }
@@ -245,7 +267,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     return FC_OK;
 }
 
-static uint16_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
+static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
 {
     uint8_t ck_a = 0;
     uint8_t ck_b = 0;
@@ -256,7 +278,12 @@ static uint16_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
         ck_b = ck_b + ck_a;
     }
 
-    return (uint16_t)(ck_a) << 8 | ck_b;
+    const BN880_UBX_Checksum_t result = {
+        .ck_a = ck_a,
+        .ck_b = ck_b,
+    };
+
+    return result;
 }
 
 /* =========================================================================

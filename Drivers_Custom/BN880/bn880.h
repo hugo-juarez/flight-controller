@@ -38,11 +38,13 @@
 #define BN880_UBX_CLASS_CFG             0x06
 #define BN880_UBX_ID_CFG                0x01
 #define BN880_UBX_LEN_CFG               3U
-#define BN880_UBX_CLASS_RATE            0x06
 #define BN880_UBX_ID_RATE               0x08
 #define BN880_UBX_LEN_RATE              6U
 #define BN880_UBX_CLASS_NAV_PVT         0x01
 #define BN880_UBX_ID_NAV_PVT            0x07
+#define BN880_UBX_CLASS_ACK             0x05
+#define BN880_UBX_ID_ACK                0x01
+#define BN880_UBX_LEN_ACK               2U
 
 /* =========================================================================
 * Enums
