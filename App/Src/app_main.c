@@ -29,6 +29,7 @@
 #include "task_navigation.h"
 #include "task_monitor.h"
 #include "task_priorities.h"
+#include "BN880/bn880.h"
 
 /* =========================================================================
  * Public APIs
@@ -55,4 +56,31 @@ FC_Status_t app_start(void)
 
     // Would only return if vTaskStartScheduler crashes
     return FC_ERR;
+}
+
+/* =========================================================================
+* Callback APIs
+* ========================================================================= */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == GPS_UART)
+    {
+        BN880_TxCmplt_Callback();
+    }
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == GPS_UART)
+    {
+        BN880_RxCmplt_Callback(Size);
+    }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == GPS_UART)
+    {
+        BN880_Error_Callback(huart);
+    }
 }

@@ -21,6 +21,7 @@ target_include_directories(app PUBLIC
 
 target_link_libraries(app PRIVATE
     config
+    drivers
     tasks
     freertos
 )
