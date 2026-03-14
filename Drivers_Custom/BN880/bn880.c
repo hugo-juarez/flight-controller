@@ -56,6 +56,7 @@ typedef struct
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
+static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, uint8_t msg_class, uint8_t msg_id);
 static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
 /* =========================================================================
@@ -224,12 +225,12 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
 
     // Check acknowledge message
     uint8_t ack_msg[BN880_UBX_ACK_MSG_LEN];
-    uint16_t size = cb_status >> 8 & 0xFFFF;
+    const uint16_t size = (uint16_t) (cb_status >> 8 & 0xFFFF);
     uint16_t i = 0;
 
     while (gps_dma_rx_read_pos != size)
     {
-        if (i > BN880_UBX_ACK_MSG_LEN)
+        if (i >= BN880_UBX_ACK_MSG_LEN)
         {
             return FC_ERR;
         }
@@ -238,28 +239,36 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
         gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
     }
 
+    const FC_Status_t status = BN880_UBX_ValidateAck(ack_msg, msg->msg_class, msg->id);
+    if (status != FC_OK) return status;
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, uint8_t msg_class, uint8_t msg_id)
+{
     // Check Sync bytes are correct
-    if (ack_msg[0] != BN880_UBX_SYNC_1 || ack_msg[1] != BN880_UBX_SYNC_2)
+    if (msg[0] != BN880_UBX_SYNC_1 || msg[1] != BN880_UBX_SYNC_2)
     {
         return FC_ERR;
     }
 
     // Check checksum matches with the one calculated / Not corrupt message
-    const BN880_UBX_Checksum_t ck_ack = BN880_UBX_Checksum(&ack_msg[2], BN880_UBX_ACK_MSG_LEN - 4);
+    const BN880_UBX_Checksum_t ck_ack = BN880_UBX_Checksum(&msg[2], BN880_UBX_ACK_MSG_LEN - 4);
 
-    if ( ack_msg[BN880_UBX_ACK_MSG_LEN - 2] != ck_ack.ck_a || ack_msg[BN880_UBX_ACK_MSG_LEN - 1] != ck_ack.ck_b )
+    if ( msg[BN880_UBX_ACK_MSG_LEN - 2] != ck_ack.ck_a || msg[BN880_UBX_ACK_MSG_LEN - 1] != ck_ack.ck_b )
     {
         return FC_ERR;
     }
 
     // Check message matches ACK message expected
-    if (ack_msg[2] != BN880_UBX_CLASS_ACK || ack_msg[3] != BN880_UBX_ID_ACK || ack_msg[4] != BN880_UBX_LEN_ACK || ack_msg[5] != BN880_UBX_LEN_ACK >> 8)
+    if (msg[2] != BN880_UBX_CLASS_ACK || msg[3] != BN880_UBX_ID_ACK || msg[4] != BN880_UBX_LEN_ACK || msg[5] != BN880_UBX_LEN_ACK >> 8)
     {
         return FC_ERR;
     }
 
     // Check that is acknowledging the right message
-    if (ack_msg[6] != msg->msg_class || ack_msg[7] != msg->id)
+    if (msg[6] != msg_class || msg[7] != msg_id)
     {
         return FC_ERR;
     }
