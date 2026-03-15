@@ -51,6 +51,45 @@
 * ========================================================================= */
 typedef enum
 {
+    BN880_UBX_VALID_DATE = 0x01,
+    BN880_UBX_VALID_TIME = 0x02,
+    BN880_UBX_VALID_FULLY_RESOLVED = 0x04,
+    BN880_UBX_VALID_MAG = 0x08
+} BN880_UBX_Validity_t;
+
+typedef enum
+{
+    BN880_UBX_GNSS_FIX_TYPE_NA = 0,
+    BN880_UBX_GNSS_FIX_TYPE_DR_ONLY = 1,
+    BN880_UBX_GNSS_FIX_TYPE_2D = 2,
+    BN880_UBX_GNSS_FIX_TYPE_3D = 3,
+    BN880_UBX_GNSS_FIX_TYPE_GNSS_DR_COMBINED = 4,
+    BN880_UBX_GNSS_FIX_TYPE_TIME_ONLY = 5,
+} BN880_UBX_GNSS_Fix_Type_t;
+
+typedef enum
+{
+    BN880_UBX_GNSS_FIX_FLAGS_GNSS_OK = 0x01,
+    BN880_UBX_GNSS_FIX_FLAGS_DIFF_ON = 0x02,
+    BN880_UBX_GNSS_FIX_FLAGS_PSM_STATE_ON = 0x04,
+    BN880_UBX_GNSS_FIX_FLAGS_PSM_ACQUISITION = 0x08,
+    BN880_UBX_GNSS_FIX_FLAGS_PSM_TRACKING = 0x0C,
+    BN880_UBX_GNSS_FIX_FLAGS_PSM_POWER_OPTIMIZED_TRACKING = 0x10,
+    BN880_UBX_GNSS_FIX_FLAGS_PSM_INACTIVE = 0x14,
+    BN880_UBX_GNSS_FIX_FLAGS_HEADING_VALID = 0x20,
+    BN880_UBX_GNSS_FIX_FLAGS_CARR_FLOAT = 0x40,
+    BN880_UBX_GNSS_FIX_FLAGS_CARR_FIXED = 0x80,
+} BN880_UBX_GNSS_Fix_Flags_t;
+
+typedef enum
+{
+    BN880_UBX_ADD_FLAGS_CONFIRMED_AVAILABLE = 0x20,
+    BN880_UBX_ADD_FLAGS_CONFIRMED_DATE = 0x40,
+    BN880_UBX_ADD_FLAGS_CONFIRMED_TIME = 0x80,
+} BN880_UBX_Add_Flags_t;;
+
+typedef enum
+{
     BN880_GPS_PERIOD_1HZ = 1000,
     BN880_GPS_PERIOD_10HZ = 100,
 } BN880_GPS_MeasRate_t;
@@ -67,6 +106,41 @@ typedef enum
 /* =========================================================================
 * Structs
 * ========================================================================= */
+typedef struct
+{
+    uint32_t                    iTOW;
+    uint16_t                    year;
+    uint8_t                     month;
+    uint8_t                     day;
+    uint8_t                     hour;
+    uint8_t                     min;
+    uint8_t                     sec;
+    BN880_UBX_Validity_t        valid;
+    uint32_t                    time_acc;
+    int32_t                     nano;
+    BN880_UBX_GNSS_Fix_Type_t   fix_type;
+    BN880_UBX_GNSS_Fix_Flags_t  flags1;
+    BN880_UBX_Add_Flags_t       flags2;
+    uint8_t                     num_SV;
+    int32_t                     lon;
+    int32_t                     lat;
+    int32_t                     height;
+    int32_t                     height_MSL;
+    uint32_t                    horizontal_acc;
+    uint32_t                    vertical_acc;
+    int32_t                     north_vel;
+    int32_t                     east_vel;
+    int32_t                     down_vel;
+    int32_t                     ground_speed;
+    int32_t                     heading_motion;
+    uint32_t                    speed_acc;
+    uint32_t                    heading_acc;
+    uint16_t                    position_DOP;
+    int32_t                     heading_vel;
+    int16_t                     mag_dec;
+    uint16_t                    mag_acc;
+} BN880_GPS_NAV_PVT_t;
+
 typedef struct
 {
     TaskHandle_t                task_handle;
