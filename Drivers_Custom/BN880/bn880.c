@@ -56,6 +56,7 @@ typedef struct
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
+static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, uint16_t size, uint16_t end_pos);
 static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, uint8_t msg_class, uint8_t msg_id);
 static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
 
@@ -184,6 +185,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     gps_tx_dma[4] = msg->length;
     gps_tx_dma[5] = msg->length >> 8;
 
+    // Load payload into buffer
     for (size_t i = 0; i < msg->length; i++)
     {
         gps_tx_dma[6 + i] = msg->payload[i];
@@ -225,27 +227,41 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
 
     // Check acknowledge message
     uint8_t ack_msg[BN880_UBX_ACK_MSG_LEN];
-    const uint16_t size = (uint16_t) (cb_status >> 8 & 0xFFFF);
-    uint16_t i = 0;
+    const uint16_t end_pos = (uint16_t) (cb_status >> 8 & 0xFFFF);
 
-    while (gps_dma_rx_read_pos != size)
-    {
-        if (i >= BN880_UBX_ACK_MSG_LEN)
-        {
-            return FC_ERR;
-        }
+    FC_Status_t status = BN880_UBX_RxBuf_Read(ack_msg, BN880_UBX_ACK_MSG_LEN, end_pos);
+    if (status != FC_OK) return status;
 
-        ack_msg[i++] = gps_rx_dma[gps_dma_rx_read_pos];
-        gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
-    }
-
-    const FC_Status_t status = BN880_UBX_ValidateAck(ack_msg, msg->msg_class, msg->id);
+    status = BN880_UBX_ValidateAck(ack_msg, msg->msg_class, msg->id);
     if (status != FC_OK) return status;
 
     return FC_OK;
 }
 
-static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, uint8_t msg_class, uint8_t msg_id)
+static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, const uint16_t size, const uint16_t end_pos)
+{
+
+    // Calculate how many bytes are available without advancing the pointer
+    const uint16_t available = (end_pos - gps_dma_rx_read_pos + BN880_UBX_MAX_RX_MSG) % BN880_UBX_MAX_RX_MSG;
+
+    // Check it matches expected data size if not send error and resync read position
+    if ( available != size)
+    {
+        gps_dma_rx_read_pos = end_pos;
+        return FC_ERR;
+    }
+
+    // Move DMA data into a local buffer
+    for (uint16_t i = 0; i < available; i++)
+    {
+        buffer[i] = gps_rx_dma[gps_dma_rx_read_pos];
+        gps_dma_rx_read_pos = (gps_dma_rx_read_pos + 1) % BN880_UBX_MAX_RX_MSG;
+    }
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, const uint8_t msg_class, const uint8_t msg_id)
 {
     // Check Sync bytes are correct
     if (msg[0] != BN880_UBX_SYNC_1 || msg[1] != BN880_UBX_SYNC_2)
@@ -305,10 +321,10 @@ void BN880_TxCmplt_Callback(void)
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
-void BN880_RxCmplt_Callback(uint16_t size)
+void BN880_RxCmplt_Callback(uint16_t end_pos)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    uint32_t value = size << 8 | FC_OK;
+    uint32_t value = end_pos << 8 | FC_OK;
     xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }

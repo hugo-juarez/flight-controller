@@ -90,7 +90,7 @@ FC_Status_t BN880_Init(BN880_t *bn880);
 * Callback APIs
 * ========================================================================= */
 void BN880_TxCmplt_Callback(void);
-void BN880_RxCmplt_Callback(uint16_t size);
+void BN880_RxCmplt_Callback(uint16_t end_pos);
 void BN880_Error_Callback(UART_HandleTypeDef *huart);
 
 #endif //FLIGHT_CONTROLLER_BN880_H
