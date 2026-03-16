@@ -27,9 +27,11 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
-#define BN880_GPS_NAV_RATE              1U
 #define BN880_TASK_RX_NOTIFY_INDEX      0
 #define BN880_TASK_TX_NOTIFY_INDEX      1
+#define BN880_GPS_NAV_RATE              1U
+#define BN880_MAG_WRITE_ADD             0x3C
+#define BN880_MAG_READ_ADD              0x3D
 #define BN880_UBX_MAX_RX_MSG            128U
 #define BN880_UBX_MAX_TX_MSG            6U
 #define BN880_UBX_ACK_MSG_LEN           10U
@@ -103,6 +105,65 @@ typedef enum
     BN880_GPS_TIME_BEIDOU = 3,
     BN880_GPS_TIME_GALILEO = 4,
 } BN880_GPS_Time_t;
+
+typedef enum
+{
+    BN880_MAG_REG_CFG_A = 0x00,
+    BN880_MAG_REG_CFG_B = 0x01,
+    BN880_MAG_REG_MODE = 0x02,
+    BN880_MAG_REG_X_MSB = 0x03,
+    BN880_MAG_REG_Z_MSB = 0x05,
+    BN880_MAG_REG_Y_MSB = 0x07,
+    BN880_MAG_REG_STATUS = 0x09,
+    BN880_MAG_REG_ID_A = 0x0A,
+    BN880_MAG_REG_ID_B = 0x0B,
+    BN880_MAG_REG_ID_C = 0x0C,
+} BN880_Mag_Reg_t;
+
+typedef enum
+{
+    BN880_MAG_MEAS_MODE_NORMAL = 0x00,
+    BN880_MAG_MEAS_MODE_POSITIVE_BIASED = 0x01,
+    BN880_MAG_MEAS_MODE_NEGATIVE_BIASED = 0x02,
+} BN880_Mag_Meas_Mode_t;
+
+typedef enum
+{
+    BN880_MAG_DOR_0_75 = 0x00,
+    BN880_MAG_DOR_1_5 = 0x04,
+    BN880_MAG_DOR_3 = 0x08,
+    BN880_MAG_DOR_7_5 = 0x0C,
+    BN880_MAG_DOR_15 = 0x10,
+    BN880_MAG_DOR_30 = 0x14,
+    BN880_MAG_DOR_75 = 0x18,
+} BN880_Mag_DOR_t;
+
+typedef enum
+{
+    BN880_MAG_SMP_AVG_1 = 0x00,
+    BN880_MAG_SMP_AVG_2 = 0x20,
+    BN880_MAG_SMP_AVG_4 = 0x40,
+    BN880_MAG_SMP_AVG_8 = 0x60,
+} BN880_Mag_Smp_Avg_t;
+
+typedef enum
+{
+    BN880_MAG_GAIN_0_88 = 0x00,
+    BN880_MAG_GAIN_1_3 = 0x20,
+    BN880_MAG_GAIN_1_9 = 0x40,
+    BN880_MAG_GAIN_2_5 = 0x60,
+    BN880_MAG_GAIN_4 = 0x80,
+    BN880_MAG_GAIN_4_7 = 0xA0,
+    BN880_MAG_GAIN_5_6 = 0xC0,
+    BN880_MAG_GAIN_8_1 = 0xE0,
+} BN880_Mag_Gain_t;
+
+typedef enum
+{
+    BN880_MAG_MODE_CONTINUOUS = 0x00,
+    BN880_MAG_MODE_SINGLE_MES = 0x01,
+    BN880_MAG_MODE_IDLE = 0x02,
+} BN880_Mag_Mode_t;
 
 /* =========================================================================
 * Structs
