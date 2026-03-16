@@ -128,9 +128,9 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
      * [1]: navRate ( 1 measurement per navigation solution)
      * [2]: timeRef (GPS time) */
     const uint16_t payload_rate[3] = {
-        bn880->period,
+        bn880->gps_period,
         BN880_GPS_NAV_RATE,
-        bn880->time_format,
+        bn880->gps_time_format,
     };
 
     const BN880_UBX_Msg_t ubx_msg = {

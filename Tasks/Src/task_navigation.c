@@ -38,8 +38,13 @@ void task_navigation(void *params)
 
     BN880_t bn880 = {
         .config = config,
-        .period = BN880_GPS_PERIOD_10HZ,
-        .time_format = BN880_GPS_TIME_GPS,
+        .gps_period = BN880_GPS_PERIOD_10HZ,
+        .gps_time_format = BN880_GPS_TIME_GPS,
+        .mag_dor = BN880_MAG_DOR_15,
+        .mag_meas_mode = BN880_MAG_MEAS_MODE_NORMAL,
+        .mag_smp_avg = BN880_MAG_SMP_AVG_1,
+        .mag_gain = BN880_MAG_GAIN_1_3,
+        .mag_mode = BN880_MAG_MODE_CONTINUOUS,
     };
 
     // 1s Delay before starting to grab useful data

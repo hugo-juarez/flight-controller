@@ -213,8 +213,13 @@ typedef struct
 typedef struct
 {
     BN880_Config_t              config;
-    BN880_GPS_MeasRate_t        period;
-    BN880_GPS_Time_t            time_format;
+    BN880_GPS_MeasRate_t        gps_period;
+    BN880_GPS_Time_t            gps_time_format;
+    BN880_Mag_Smp_Avg_t         mag_smp_avg;
+    BN880_Mag_DOR_t             mag_dor;
+    BN880_Mag_Meas_Mode_t       mag_meas_mode;
+    BN880_Mag_Gain_t            mag_gain;
+    BN880_Mag_Mode_t            mag_mode;
 } BN880_t;
 
 /* =========================================================================
