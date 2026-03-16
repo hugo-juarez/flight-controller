@@ -7,10 +7,10 @@
 * @date    2026-02-26
 * @version 0.1.0
 *
-* @brief   This library hold the APIs for the BN880 GPS sensor.
+* @brief   This library holds the APIs for the BN880 GPS sensor.
 *
 * @details
-* This file holds the APIs to communicate and pull data form BN880 GPS sensor's
+* This file holds the APIs to communicate and pull data from BN880 GPS sensor's
 * M8030-KT GPS and HMC5883L magnetometer. Using UBX as communication for GPS.
 *
 * @copyright Copyright (c) 2026 Hugo Juarez. Licensed under the MIT License.
@@ -71,7 +71,7 @@ FC_Status_t BN880_Init(BN880_t *bn880)
         return FC_ERR;
     }
 
-    // Assign task hanlder to private variable
+    // Assign task handle to private variable
     gps_task_handle = bn880->config.task_handle;
 
     // Initialize GPS module of BN880
@@ -107,17 +107,17 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     // Let baud generator and RX line settle
     vTaskDelay(pdMS_TO_TICKS(2));
 
-    // Initialized both DMA buffers
+    // Initialize both DMA buffers
     memset(gps_rx_dma, 0, sizeof(gps_rx_dma));
     memset(gps_tx_dma, 0, sizeof(gps_tx_dma));
 
-    // Initialized Circular DMA receive message
+    // Initialize circular DMA receive
     if ( HAL_UARTEx_ReceiveToIdle_DMA(bn880->config.uart, gps_rx_dma, BN880_UBX_MAX_RX_MSG) != HAL_OK)
     {
         return FC_UART_ERR;
     }
 
-    // Disable interrupt from DMA Half anc Cmplt only Idle interrupt will trigger Ex_Event Callback
+    // Disable DMA Half and Complete interrupts; only Idle interrupt will trigger Ex_Event Callback
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_HT);
     __HAL_DMA_DISABLE_IT(bn880->config.uart->hdmarx, DMA_IT_TC);
 
@@ -195,11 +195,11 @@ FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, const uint16_t end
     gps_nav_pvt->fix_type = nav_msg[26];
     gps_nav_pvt->flags1 = nav_msg[27];
     gps_nav_pvt->flags2 = nav_msg[28];
-    gps_nav_pvt->num_SV = nav_msg[29];
+    gps_nav_pvt->num_sv = nav_msg[29];
     memcpy(&gps_nav_pvt->lon, &nav_msg[30], 4);
     memcpy(&gps_nav_pvt->lat, &nav_msg[34], 4);
     memcpy(&gps_nav_pvt->height, &nav_msg[38], 4);
-    memcpy(&gps_nav_pvt->height_MSL, &nav_msg[42], 4);
+    memcpy(&gps_nav_pvt->height_msl, &nav_msg[42], 4);
     memcpy(&gps_nav_pvt->horizontal_acc, &nav_msg[46], 4);
     memcpy(&gps_nav_pvt->vertical_acc, &nav_msg[50], 4);
     memcpy(&gps_nav_pvt->north_vel, &nav_msg[54], 4);
@@ -209,7 +209,7 @@ FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, const uint16_t end
     memcpy(&gps_nav_pvt->heading_motion, &nav_msg[70], 4);
     memcpy(&gps_nav_pvt->speed_acc, &nav_msg[74], 4);
     memcpy(&gps_nav_pvt->heading_acc, &nav_msg[78], 4);
-    memcpy(&gps_nav_pvt->position_DOP, &nav_msg[82], 2);
+    memcpy(&gps_nav_pvt->position_dop, &nav_msg[82], 2);
     // Reserved data in bytes 84-89
     memcpy(&gps_nav_pvt->heading_vel, &nav_msg[90], 4);
     memcpy(&gps_nav_pvt->mag_dec, &nav_msg[94], 2);

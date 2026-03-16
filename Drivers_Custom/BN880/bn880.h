@@ -7,10 +7,10 @@
 * @date    2026-02-26
 * @version 0.1.0
 *
-* @brief   This library hold the APIs for the BN880 GPS sensor.
+* @brief   This library holds the APIs for the BN880 GPS sensor.
 *
 * @details
-* This file holds the APIs to communicate and pull data form BN880 GPS sensor's
+* This file holds the APIs to communicate and pull data from BN880 GPS sensor's
 * M8030-KT GPS and HMC5883L magnetometer. Using UBX as communication for GPS.
 *
 * @copyright Copyright (c) 2026 Hugo Juarez. Licensed under the MIT License.
@@ -30,8 +30,8 @@
 #define BN880_TASK_RX_NOTIFY_INDEX      0
 #define BN880_TASK_TX_NOTIFY_INDEX      1
 #define BN880_GPS_NAV_RATE              1U
-#define BN880_MAG_WRITE_ADD             0x3C
-#define BN880_MAG_READ_ADD              0x3D
+#define BN880_MAG_WRITE_ADDR            0x3C
+#define BN880_MAG_READ_ADDR             0x3D
 #define BN880_UBX_MAX_RX_MSG            128U
 #define BN880_UBX_MAX_TX_MSG            6U
 #define BN880_UBX_ACK_MSG_LEN           10U
@@ -161,7 +161,7 @@ typedef enum
 typedef enum
 {
     BN880_MAG_MODE_CONTINUOUS = 0x00,
-    BN880_MAG_MODE_SINGLE_MES = 0x01,
+    BN880_MAG_MODE_SINGLE_MEAS = 0x01,
     BN880_MAG_MODE_IDLE = 0x02,
 } BN880_Mag_Mode_t;
 
@@ -183,11 +183,11 @@ typedef struct
     BN880_UBX_GNSS_Fix_Type_t   fix_type;
     BN880_UBX_GNSS_Fix_Flags_t  flags1;
     BN880_UBX_Add_Flags_t       flags2;
-    uint8_t                     num_SV;
+    uint8_t                     num_sv;
     int32_t                     lon;
     int32_t                     lat;
     int32_t                     height;
-    int32_t                     height_MSL;
+    int32_t                     height_msl;
     uint32_t                    horizontal_acc;
     uint32_t                    vertical_acc;
     int32_t                     north_vel;
@@ -197,7 +197,7 @@ typedef struct
     int32_t                     heading_motion;
     uint32_t                    speed_acc;
     uint32_t                    heading_acc;
-    uint16_t                    position_DOP;
+    uint16_t                    position_dop;
     int32_t                     heading_vel;
     int16_t                     mag_dec;
     uint16_t                    mag_acc;
