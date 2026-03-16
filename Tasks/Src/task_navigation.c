@@ -32,6 +32,7 @@ void task_navigation(void *params)
 
     const BN880_Config_t config = {
         .task_handle = xTaskGetCurrentTaskHandle(),
+        .i2c = hw->hi2c_mag,
         .uart = hw->huart_gps,
     };
 

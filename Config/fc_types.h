@@ -49,6 +49,7 @@ typedef struct
 typedef struct
 {
     SPI_HandleTypeDef       *hspi_imu;
+    I2C_HandleTypeDef       *hi2c_mag;
     UART_HandleTypeDef      *huart_crsf;
     UART_HandleTypeDef      *huart_gps;
     UART_HandleTypeDef      *huart_print;
