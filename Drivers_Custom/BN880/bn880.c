@@ -55,6 +55,7 @@ typedef struct
 * Private Function Prototypes
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
+static FC_Status_t BN880_Mag_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
 static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, uint16_t size, uint16_t end_pos);
 static FC_Status_t BN880_UBX_Validate(const uint8_t *msg, uint16_t msg_length);
@@ -74,8 +75,12 @@ FC_Status_t BN880_Init(BN880_t *bn880)
     // Assign task handle to private variable
     gps_task_handle = bn880->config.task_handle;
 
+    // Initialize Mag module of BN880
+    FC_Status_t status = BN880_Mag_Init(bn880);
+    if ( status != FC_OK ) return status;
+
     // Initialize GPS module of BN880
-    FC_Status_t status = BN880_GPS_Init(bn880);
+    status = BN880_GPS_Init(bn880);
     if ( status != FC_OK ) return status;
 
     return FC_OK;
@@ -164,6 +169,58 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 
     status = BN880_UBX_SendMessage(bn880, &ubx_cfg_msg);
     if (status != FC_OK) return status;
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_Mag_Init(BN880_t *bn880)
+{
+
+    // Turn-on Time
+    vTaskDelay(pdMS_TO_TICKS(50));
+
+    // Set Register A
+    uint8_t cfg_a[2] ={ BN880_MAG_REG_CFG_A , bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode };
+
+    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, cfg_a, 2, HAL_MAX_DELAY) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    // Set Register B
+    uint8_t cfg_b[2] = { BN880_MAG_REG_CFG_B, bn880->mag_smp_avg };
+    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, cfg_b, 2, HAL_MAX_DELAY) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    //Set Mode Register
+    uint8_t mode[2] = { BN880_MAG_REG_MODE, bn880->mag_mode};
+    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, mode, 2, HAL_MAX_DELAY) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    // Check that the data was written correctly
+
+    //First we set the pointer of the read to be the first register address
+    uint8_t dummy = BN880_MAG_REG_CFG_A;
+    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, &dummy, 1, HAL_MAX_DELAY) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    // Read all cfg data
+    uint8_t check_data[3];
+    if (HAL_I2C_Master_Receive(bn880->config.i2c, BN880_MAG_READ_ADDR, check_data, 3, HAL_MAX_DELAY) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    if (cfg_a[1] != check_data[0] || cfg_b[1] != check_data[1] || mode[1] != check_data[2])
+    {
+        return FC_CONFIG_ERR;
+    }
 
     return FC_OK;
 }
