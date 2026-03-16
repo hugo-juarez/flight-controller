@@ -31,6 +31,7 @@ typedef enum
     FC_ERR,
     FC_NULL_PTR_ERR,
     FC_SPI_ERR,
+    FC_I2C_ERR,
     FC_UART_ERR,
     FC_DMA_ERR,
     FC_CONFIG_ERR,
