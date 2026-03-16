@@ -33,6 +33,7 @@
 #define BN880_UBX_MAX_RX_MSG            128U
 #define BN880_UBX_MAX_TX_MSG            6U
 #define BN880_UBX_ACK_MSG_LEN           10U
+#define BN880_UBX_NAV_MSG_LEN           100U
 #define BN880_UBX_SYNC_1                0xB5
 #define BN880_UBX_SYNC_2                0x62
 #define BN880_UBX_CLASS_CFG             0x06
@@ -86,7 +87,7 @@ typedef enum
     BN880_UBX_ADD_FLAGS_CONFIRMED_AVAILABLE = 0x20,
     BN880_UBX_ADD_FLAGS_CONFIRMED_DATE = 0x40,
     BN880_UBX_ADD_FLAGS_CONFIRMED_TIME = 0x80,
-} BN880_UBX_Add_Flags_t;;
+} BN880_UBX_Add_Flags_t;
 
 typedef enum
 {
@@ -159,6 +160,7 @@ typedef struct
 * Public APIs
 * ========================================================================= */
 FC_Status_t BN880_Init(BN880_t *bn880);
+FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, uint16_t end_pos);
 
 /* =========================================================================
 * Callback APIs
