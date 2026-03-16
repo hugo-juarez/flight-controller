@@ -57,8 +57,9 @@ typedef struct
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
 static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, uint16_t size, uint16_t end_pos);
+static FC_Status_t BN880_UBX_Validate(const uint8_t *msg, uint16_t msg_length);
 static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, uint8_t msg_class, uint8_t msg_id);
-static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, uint8_t len);
+static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, uint16_t len);
 
 /* =========================================================================
 * Public APIs
@@ -167,6 +168,56 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
     return FC_OK;
 }
 
+FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, const uint16_t end_pos)
+{
+    if (gps_nav_pvt == NULL) return FC_NULL_PTR_ERR;
+
+    uint8_t nav_msg[BN880_UBX_NAV_MSG_LEN];
+
+    FC_Status_t status = BN880_UBX_RxBuf_Read(nav_msg, BN880_UBX_NAV_MSG_LEN, end_pos);
+    if ( status != FC_OK ) return status;
+
+    // Check message is valid
+    status = BN880_UBX_Validate(nav_msg, BN880_UBX_NAV_MSG_LEN);
+    if ( status != FC_OK ) return status;
+
+    // Assigning values into struct
+    memcpy(&gps_nav_pvt->iTOW, &nav_msg[6], 4);
+    memcpy(&gps_nav_pvt->year, &nav_msg[10], 2);
+    gps_nav_pvt->month = nav_msg[12];
+    gps_nav_pvt->day = nav_msg[13];
+    gps_nav_pvt->hour = nav_msg[14];
+    gps_nav_pvt->min = nav_msg[15];
+    gps_nav_pvt->sec = nav_msg[16];
+    gps_nav_pvt->valid = nav_msg[17];
+    memcpy(&gps_nav_pvt->time_acc, &nav_msg[18], 4);
+    memcpy(&gps_nav_pvt->nano, &nav_msg[22], 4);
+    gps_nav_pvt->fix_type = nav_msg[26];
+    gps_nav_pvt->flags1 = nav_msg[27];
+    gps_nav_pvt->flags2 = nav_msg[28];
+    gps_nav_pvt->num_SV = nav_msg[29];
+    memcpy(&gps_nav_pvt->lon, &nav_msg[30], 4);
+    memcpy(&gps_nav_pvt->lat, &nav_msg[34], 4);
+    memcpy(&gps_nav_pvt->height, &nav_msg[38], 4);
+    memcpy(&gps_nav_pvt->height_MSL, &nav_msg[42], 4);
+    memcpy(&gps_nav_pvt->horizontal_acc, &nav_msg[46], 4);
+    memcpy(&gps_nav_pvt->vertical_acc, &nav_msg[50], 4);
+    memcpy(&gps_nav_pvt->north_vel, &nav_msg[54], 4);
+    memcpy(&gps_nav_pvt->east_vel, &nav_msg[58], 4);
+    memcpy(&gps_nav_pvt->down_vel, &nav_msg[62], 4);
+    memcpy(&gps_nav_pvt->ground_speed, &nav_msg[66], 4);
+    memcpy(&gps_nav_pvt->heading_motion, &nav_msg[70], 4);
+    memcpy(&gps_nav_pvt->speed_acc, &nav_msg[74], 4);
+    memcpy(&gps_nav_pvt->heading_acc, &nav_msg[78], 4);
+    memcpy(&gps_nav_pvt->position_DOP, &nav_msg[82], 2);
+    // Reserved data in bytes 84-89
+    memcpy(&gps_nav_pvt->heading_vel, &nav_msg[90], 4);
+    memcpy(&gps_nav_pvt->mag_dec, &nav_msg[94], 2);
+    memcpy(&gps_nav_pvt->mag_acc, &nav_msg[96], 2);
+
+    return FC_OK;
+}
+
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg)
 {
 
@@ -261,7 +312,7 @@ static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, const uint16_t size, co
     return FC_OK;
 }
 
-static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, const uint8_t msg_class, const uint8_t msg_id)
+static FC_Status_t BN880_UBX_Validate(const uint8_t *msg, const uint16_t msg_length)
 {
     // Check Sync bytes are correct
     if (msg[0] != BN880_UBX_SYNC_1 || msg[1] != BN880_UBX_SYNC_2)
@@ -270,12 +321,21 @@ static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, const uint8_t msg_c
     }
 
     // Check checksum matches with the one calculated / Not corrupt message
-    const BN880_UBX_Checksum_t ck_ack = BN880_UBX_Checksum(&msg[2], BN880_UBX_ACK_MSG_LEN - 4);
+    const BN880_UBX_Checksum_t ck_ack = BN880_UBX_Checksum(&msg[2], msg_length - 4);
 
-    if ( msg[BN880_UBX_ACK_MSG_LEN - 2] != ck_ack.ck_a || msg[BN880_UBX_ACK_MSG_LEN - 1] != ck_ack.ck_b )
+    if ( msg[msg_length - 2] != ck_ack.ck_a || msg[msg_length - 1] != ck_ack.ck_b )
     {
         return FC_ERR;
     }
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, const uint8_t msg_class, const uint8_t msg_id)
+{
+    // Validate message
+    const FC_Status_t status = BN880_UBX_Validate(msg, BN880_UBX_ACK_MSG_LEN);
+    if ( status != FC_OK ) return status;
 
     // Check message matches ACK message expected
     if (msg[2] != BN880_UBX_CLASS_ACK || msg[3] != BN880_UBX_ID_ACK || msg[4] != BN880_UBX_LEN_ACK || msg[5] != BN880_UBX_LEN_ACK >> 8)
@@ -292,7 +352,7 @@ static FC_Status_t BN880_UBX_ValidateAck(const uint8_t *msg, const uint8_t msg_c
     return FC_OK;
 }
 
-static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, const uint8_t len)
+static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, const uint16_t len)
 {
     uint8_t ck_a = 0;
     uint8_t ck_b = 0;
