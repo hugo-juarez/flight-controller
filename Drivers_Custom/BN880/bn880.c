@@ -224,7 +224,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
         .msg_class = BN880_UBX_CLASS_CFG,
         .id = BN880_UBX_ID_RATE,
         .length = BN880_UBX_LEN_RATE,
-        .payload = (uint8_t*) payload_rate,
+        .payload = (const uint8_t*) payload_rate,
     };
 
     FC_Status_t status = BN880_UBX_SendMessage(bn880, &ubx_msg);
@@ -236,7 +236,7 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
      * [0]: msgClass (NAV class)
      * [1]: msgId (NAV-PVT message)
      * [2]: rate (Send NAV every 10Hz) */
-    uint8_t payload_cfg_msg[3] = {
+    const uint8_t payload_cfg_msg[3] = {
         BN880_UBX_CLASS_NAV_PVT,
         BN880_UBX_ID_NAV_PVT,
         BN880_GPS_NAV_RATE
@@ -533,7 +533,7 @@ void BN880_GPS_TxCmplt_Callback(void)
 void BN880_GPS_RxCmplt_Callback(uint16_t end_pos)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    uint32_t value = end_pos << 8 | FC_OK;
+    uint32_t value = (uint32_t) end_pos << 8 | FC_OK;
     xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_RX_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
