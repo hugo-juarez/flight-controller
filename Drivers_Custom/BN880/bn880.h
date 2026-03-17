@@ -27,11 +27,12 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
-#define BN880_TASK_RX_NOTIFY_INDEX      0
-#define BN880_TASK_TX_NOTIFY_INDEX      1
+#define BN880_TASK_GPS_RX_NOTIFY_INDEX  0
+#define BN880_TASK_GPS_TX_NOTIFY_INDEX  1
+#define BN880_TASK_MAG_NOTIFY_INDEX     2
 #define BN880_GPS_NAV_RATE              1U
-#define BN880_MAG_WRITE_ADDR            0x3C
-#define BN880_MAG_READ_ADDR             0x3D
+#define BN880_MAG_ADDR                  0x3C
+#define BN880_MAG_DMA_BUFFER            6U
 #define BN880_UBX_MAX_RX_MSG            128U
 #define BN880_UBX_MAX_TX_MSG            6U
 #define BN880_UBX_ACK_MSG_LEN           10U
@@ -231,8 +232,11 @@ FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, uint16_t end_pos);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void BN880_TxCmplt_Callback(void);
-void BN880_RxCmplt_Callback(uint16_t end_pos);
-void BN880_Error_Callback(UART_HandleTypeDef *huart);
+void BN880_GPS_TxCmplt_Callback(void);
+void BN880_GPS_RxCmplt_Callback(uint16_t end_pos);
+void BN880_GPS_Error_Callback(UART_HandleTypeDef *huart);
+void BN880_Mag_MasterTxCplt_Callback(void);
+void BN880_Mag_MasterRxCplt_Callback(void);
+void BN880_Mag_Error_Callback(void);
 
 #endif //FLIGHT_CONTROLLER_BN880_H

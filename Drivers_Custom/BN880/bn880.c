@@ -22,7 +22,7 @@
 /* =========================================================================
 * Private Global Variables
 * ========================================================================= */
-static TaskHandle_t gps_task_handle;
+static TaskHandle_t bn880_task_handle;
 static uint16_t gps_dma_rx_read_pos = 0;
 
 __attribute__((section(".sram2")))
@@ -32,6 +32,10 @@ static uint8_t gps_tx_dma[BN880_UBX_MAX_TX_MSG + 8U];
 __attribute__((section(".sram2")))
 __attribute__((aligned(32)))
 static uint8_t gps_rx_dma[BN880_UBX_MAX_RX_MSG];
+
+__attribute__((section(".sram2")))
+__attribute__((aligned(32)))
+static uint8_t mag_dma_buffer[BN880_MAG_DMA_BUFFER];
 
 /* =========================================================================
 * Private Structs
@@ -56,6 +60,9 @@ typedef struct
 * ========================================================================= */
 static FC_Status_t BN880_GPS_Init(BN880_t *bn880);
 static FC_Status_t BN880_Mag_Init(BN880_t *bn880);
+static FC_Status_t BN880_Mag_WriteReg(const BN880_t *bn880, BN880_Mag_Reg_t reg, uint8_t value);
+static FC_Status_t BN880_Mag_SetReg(const BN880_t *bn880, BN880_Mag_Reg_t reg);
+static FC_Status_t BN880_Mag_ReadReg(const BN880_t *bn880, BN880_Mag_Reg_t reg, uint8_t *buf, uint16_t len);
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg);
 static FC_Status_t BN880_UBX_RxBuf_Read(uint8_t *buffer, uint16_t size, uint16_t end_pos);
 static FC_Status_t BN880_UBX_Validate(const uint8_t *msg, uint16_t msg_length);
@@ -73,7 +80,7 @@ FC_Status_t BN880_Init(BN880_t *bn880)
     }
 
     // Assign task handle to private variable
-    gps_task_handle = bn880->config.task_handle;
+    bn880_task_handle = bn880->config.task_handle;
 
     // Initialize Mag module of BN880
     FC_Status_t status = BN880_Mag_Init(bn880);
@@ -175,52 +182,111 @@ static FC_Status_t BN880_GPS_Init(BN880_t *bn880)
 
 static FC_Status_t BN880_Mag_Init(BN880_t *bn880)
 {
-
     // Turn-on Time
     vTaskDelay(pdMS_TO_TICKS(50));
 
-    // Set Register A
-    uint8_t cfg_a[2] ={ BN880_MAG_REG_CFG_A , bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode };
+    memset(mag_dma_buffer, 0, sizeof(mag_dma_buffer));
 
-    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, cfg_a, 2, HAL_MAX_DELAY) != HAL_OK)
-    {
-        return FC_I2C_ERR;
-    }
+    // Set Register A
+    FC_Status_t status = BN880_Mag_WriteReg(bn880, BN880_MAG_REG_CFG_A, bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode);
+    if ( status != FC_OK ) return status;
 
     // Set Register B
-    uint8_t cfg_b[2] = { BN880_MAG_REG_CFG_B, bn880->mag_smp_avg };
-    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, cfg_b, 2, HAL_MAX_DELAY) != HAL_OK)
-    {
-        return FC_I2C_ERR;
-    }
+    status = BN880_Mag_WriteReg(bn880, BN880_MAG_REG_CFG_B, bn880->mag_gain);
+    if ( status != FC_OK ) return status;
 
     //Set Mode Register
-    uint8_t mode[2] = { BN880_MAG_REG_MODE, bn880->mag_mode};
-    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, mode, 2, HAL_MAX_DELAY) != HAL_OK)
-    {
-        return FC_I2C_ERR;
-    }
+    status = BN880_Mag_WriteReg(bn880, BN880_MAG_REG_MODE, bn880->mag_mode);
+    if ( status != FC_OK ) return status;
 
     // Check that the data was written correctly
 
-    //First we set the pointer of the read to be the first register address
-    uint8_t dummy = BN880_MAG_REG_CFG_A;
-    if (HAL_I2C_Master_Transmit(bn880->config.i2c, BN880_MAG_WRITE_ADDR, &dummy, 1, HAL_MAX_DELAY) != HAL_OK)
-    {
-        return FC_I2C_ERR;
-    }
-
-    // Read all cfg data
     uint8_t check_data[3];
-    if (HAL_I2C_Master_Receive(bn880->config.i2c, BN880_MAG_READ_ADDR, check_data, 3, HAL_MAX_DELAY) != HAL_OK)
-    {
-        return FC_I2C_ERR;
-    }
+    status = BN880_Mag_ReadReg(bn880, BN880_MAG_REG_CFG_A, check_data, 3);
+    if ( status != FC_OK ) return status;
 
-    if (cfg_a[1] != check_data[0] || cfg_b[1] != check_data[1] || mode[1] != check_data[2])
+    if ((bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode) != check_data[0] || bn880->mag_gain != check_data[1] || bn880->mag_mode != check_data[2])
     {
         return FC_CONFIG_ERR;
     }
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_Mag_WriteReg(const BN880_t *bn880, const BN880_Mag_Reg_t reg, const uint8_t value)
+{
+    uint32_t cb_status = 0;
+
+    mag_dma_buffer[0] = reg;
+    mag_dma_buffer[1] = value;
+
+    if ( HAL_I2C_Master_Transmit_DMA(bn880->config.i2c, BN880_MAG_ADDR, mag_dma_buffer, 2) != HAL_OK )
+    {
+        return FC_I2C_ERR;
+    }
+
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_MAG_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE )
+    {
+        return FC_I2C_ERR;
+    }
+
+    if (cb_status != FC_OK)
+    {
+        return FC_ERR;
+    }
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_Mag_SetReg(const BN880_t *bn880, const BN880_Mag_Reg_t reg)
+{
+    uint32_t cb_status = 0;
+
+    mag_dma_buffer[0] = reg;
+
+    if ( HAL_I2C_Master_Transmit_DMA(bn880->config.i2c, BN880_MAG_ADDR, mag_dma_buffer, 1) != HAL_OK )
+    {
+        return FC_I2C_ERR;
+    }
+
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_MAG_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE )
+    {
+        return FC_I2C_ERR;
+    }
+
+    if (cb_status != FC_OK)
+    {
+        return FC_ERR;
+    }
+
+    return FC_OK;
+}
+
+static FC_Status_t BN880_Mag_ReadReg(const BN880_t *bn880, const BN880_Mag_Reg_t reg, uint8_t *buf, const uint16_t len)
+{
+    if (len > BN880_MAG_DMA_BUFFER) return FC_DMA_ERR;
+
+    uint32_t cb_status = 0;
+
+    const FC_Status_t status = BN880_Mag_SetReg(bn880, reg);
+    if ( status != FC_OK ) return status;
+
+    if (HAL_I2C_Master_Receive_DMA(bn880->config.i2c, BN880_MAG_ADDR, mag_dma_buffer, len) != HAL_OK)
+    {
+        return FC_I2C_ERR;
+    }
+
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_MAG_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE )
+    {
+        return FC_I2C_ERR;
+    }
+
+    if (cb_status != FC_OK)
+    {
+        return FC_ERR;
+    }
+
+    memcpy(buf, mag_dma_buffer, len);
 
     return FC_OK;
 }
@@ -312,7 +378,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     }
 
     // Wait for message to complete being sent
-    if ( xTaskNotifyWaitIndexed(BN880_TASK_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_GPS_TX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(5)) == pdFALSE)
     {
         return FC_UART_ERR;
     }
@@ -323,7 +389,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     }
 
     // Wait for acknowledge bit
-    if ( xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(20)) == pdFALSE)
+    if ( xTaskNotifyWaitIndexed(BN880_TASK_GPS_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(20)) == pdFALSE)
     {
         return FC_UART_ERR;
     }
@@ -431,22 +497,22 @@ static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, const uint16_
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void BN880_TxCmplt_Callback(void)
+void BN880_GPS_TxCmplt_Callback(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_TX_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_TX_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
-void BN880_RxCmplt_Callback(uint16_t end_pos)
+void BN880_GPS_RxCmplt_Callback(uint16_t end_pos)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     uint32_t value = end_pos << 8 | FC_OK;
-    xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_RX_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
-void BN880_Error_Callback(UART_HandleTypeDef *huart)
+void BN880_GPS_Error_Callback(UART_HandleTypeDef *huart)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     uint32_t error = HAL_UART_GetError(huart);
@@ -454,18 +520,39 @@ void BN880_Error_Callback(UART_HandleTypeDef *huart)
     if (error & (HAL_UART_ERROR_ORE | HAL_UART_ERROR_FE | HAL_UART_ERROR_NE  | HAL_UART_ERROR_PE | HAL_UART_ERROR_RTO))
     {
         // Rx Error
-        xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, FC_UART_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+        xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_RX_NOTIFY_INDEX, FC_UART_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     } else if (error & HAL_UART_ERROR_DMA)
     {
         // Could be any DMA
         if (huart->gState == HAL_UART_STATE_ERROR)
         {
-            xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_TX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+            xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_TX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
         } else
         {
-            xTaskNotifyIndexedFromISR(gps_task_handle, BN880_TASK_RX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+            xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_RX_NOTIFY_INDEX, FC_DMA_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
         }
     }
 
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void BN880_Mag_MasterTxCplt_Callback(void)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_MAG_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void BN880_Mag_MasterRxCplt_Callback(void)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_MAG_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
+void BN880_Mag_Error_Callback(void)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_MAG_NOTIFY_INDEX, FC_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }

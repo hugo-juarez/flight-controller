@@ -56,7 +56,7 @@ void task_navigation(void *params)
     while (1)
     {
         // Wait for acknowledge bit
-        if (xTaskNotifyWaitIndexed(BN880_TASK_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(100)) == pdFALSE)
+        if (xTaskNotifyWaitIndexed(BN880_TASK_GPS_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(100)) == pdFALSE)
         {
             //@ToDo: Add or trigger alarm for now it is ignored
             continue;

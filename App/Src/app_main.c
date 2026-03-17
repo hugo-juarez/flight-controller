@@ -61,11 +61,35 @@ FC_Status_t app_start(void)
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == MAG_I2C)
+    {
+        BN880_Mag_MasterTxCplt_Callback();
+    }
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == MAG_I2C)
+    {
+        BN880_Mag_MasterRxCplt_Callback();
+    }
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == MAG_I2C)
+    {
+        BN880_Mag_Error_Callback();
+    }
+}
+
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == GPS_UART)
     {
-        BN880_TxCmplt_Callback();
+        BN880_GPS_TxCmplt_Callback();
     }
 }
 
@@ -73,7 +97,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == GPS_UART)
     {
-        BN880_RxCmplt_Callback(Size);
+        BN880_GPS_RxCmplt_Callback(Size);
     }
 }
 
@@ -81,6 +105,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == GPS_UART)
     {
-        BN880_Error_Callback(huart);
+        BN880_GPS_Error_Callback(huart);
     }
 }
