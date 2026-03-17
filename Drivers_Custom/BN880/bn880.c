@@ -46,7 +46,7 @@ typedef struct
     uint8_t         msg_class;
     uint8_t         id;
     uint16_t        length; // Little Endian
-    uint8_t         *payload;
+    const uint8_t         *payload;
 } BN880_UBX_Msg_t;
 
 typedef struct
@@ -76,7 +76,7 @@ FC_Status_t BN880_Init(BN880_t *bn880)
 {
     if (bn880 == NULL)
     {
-        return FC_ERR;
+        return FC_NULL_PTR_ERR;
     }
 
     // Assign task handle to private variable
@@ -89,6 +89,81 @@ FC_Status_t BN880_Init(BN880_t *bn880)
     // Initialize GPS module of BN880
     status = BN880_GPS_Init(bn880);
     if ( status != FC_OK ) return status;
+
+    return FC_OK;
+}
+
+
+FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, const uint16_t end_pos)
+{
+    if (gps_nav_pvt == NULL) return FC_NULL_PTR_ERR;
+
+    uint8_t nav_msg[BN880_UBX_NAV_MSG_LEN];
+
+    FC_Status_t status = BN880_UBX_RxBuf_Read(nav_msg, BN880_UBX_NAV_MSG_LEN, end_pos);
+    if ( status != FC_OK ) return status;
+
+    // Check message is valid
+    status = BN880_UBX_Validate(nav_msg, BN880_UBX_NAV_MSG_LEN);
+    if ( status != FC_OK ) return status;
+
+    // Assigning values into struct
+    memcpy(&gps_nav_pvt->iTOW, &nav_msg[6], 4);
+    memcpy(&gps_nav_pvt->year, &nav_msg[10], 2);
+    gps_nav_pvt->month = nav_msg[12];
+    gps_nav_pvt->day = nav_msg[13];
+    gps_nav_pvt->hour = nav_msg[14];
+    gps_nav_pvt->min = nav_msg[15];
+    gps_nav_pvt->sec = nav_msg[16];
+    gps_nav_pvt->valid = nav_msg[17];
+    memcpy(&gps_nav_pvt->time_acc, &nav_msg[18], 4);
+    memcpy(&gps_nav_pvt->nano, &nav_msg[22], 4);
+    gps_nav_pvt->fix_type = nav_msg[26];
+    gps_nav_pvt->flags1 = nav_msg[27];
+    gps_nav_pvt->flags2 = nav_msg[28];
+    gps_nav_pvt->num_sv = nav_msg[29];
+    memcpy(&gps_nav_pvt->lon, &nav_msg[30], 4);
+    memcpy(&gps_nav_pvt->lat, &nav_msg[34], 4);
+    memcpy(&gps_nav_pvt->height, &nav_msg[38], 4);
+    memcpy(&gps_nav_pvt->height_msl, &nav_msg[42], 4);
+    memcpy(&gps_nav_pvt->horizontal_acc, &nav_msg[46], 4);
+    memcpy(&gps_nav_pvt->vertical_acc, &nav_msg[50], 4);
+    memcpy(&gps_nav_pvt->north_vel, &nav_msg[54], 4);
+    memcpy(&gps_nav_pvt->east_vel, &nav_msg[58], 4);
+    memcpy(&gps_nav_pvt->down_vel, &nav_msg[62], 4);
+    memcpy(&gps_nav_pvt->ground_speed, &nav_msg[66], 4);
+    memcpy(&gps_nav_pvt->heading_motion, &nav_msg[70], 4);
+    memcpy(&gps_nav_pvt->speed_acc, &nav_msg[74], 4);
+    memcpy(&gps_nav_pvt->heading_acc, &nav_msg[78], 4);
+    memcpy(&gps_nav_pvt->position_dop, &nav_msg[82], 2);
+    // Reserved data in bytes 84-89
+    memcpy(&gps_nav_pvt->heading_vel, &nav_msg[90], 4);
+    memcpy(&gps_nav_pvt->mag_dec, &nav_msg[94], 2);
+    memcpy(&gps_nav_pvt->mag_acc, &nav_msg[96], 2);
+
+    return FC_OK;
+}
+
+FC_Status_t BN880_Mag_Parse(const BN880_t *bn880, BN880_Mag_Data_t *mag_data)
+{
+    if (bn880 == NULL || mag_data == NULL) return FC_NULL_PTR_ERR;
+
+    uint8_t mag_status;
+    FC_Status_t status = BN880_Mag_ReadReg(bn880, BN880_MAG_REG_STATUS, &mag_status, 1);
+    if ( status != FC_OK ) return status;
+
+    if ( !(mag_status & 0x01) )
+    {
+        return FC_ERR;
+    }
+
+    uint8_t buffer[6];
+    status = BN880_Mag_ReadReg(bn880, BN880_MAG_REG_X_MSB, buffer, 6);
+    if ( status != FC_OK ) return status;
+
+    mag_data->x = (int16_t) ((uint16_t) buffer[0] << 8 | buffer[1]);
+    mag_data->z = (int16_t) ((uint16_t) buffer[2] << 8 | buffer[3]);
+    mag_data->y = (int16_t) ((uint16_t) buffer[4] << 8 | buffer[5]);
 
     return FC_OK;
 }
@@ -188,7 +263,8 @@ static FC_Status_t BN880_Mag_Init(BN880_t *bn880)
     memset(mag_dma_buffer, 0, sizeof(mag_dma_buffer));
 
     // Set Register A
-    FC_Status_t status = BN880_Mag_WriteReg(bn880, BN880_MAG_REG_CFG_A, bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode);
+    const uint8_t cfg_a = bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode;
+    FC_Status_t status = BN880_Mag_WriteReg(bn880, BN880_MAG_REG_CFG_A, cfg_a);
     if ( status != FC_OK ) return status;
 
     // Set Register B
@@ -205,7 +281,7 @@ static FC_Status_t BN880_Mag_Init(BN880_t *bn880)
     status = BN880_Mag_ReadReg(bn880, BN880_MAG_REG_CFG_A, check_data, 3);
     if ( status != FC_OK ) return status;
 
-    if ((bn880->mag_dor | bn880->mag_smp_avg | bn880->mag_meas_mode) != check_data[0] || bn880->mag_gain != check_data[1] || bn880->mag_mode != check_data[2])
+    if (cfg_a != check_data[0] || bn880->mag_gain != check_data[1] || bn880->mag_mode != check_data[2])
     {
         return FC_CONFIG_ERR;
     }
@@ -291,56 +367,6 @@ static FC_Status_t BN880_Mag_ReadReg(const BN880_t *bn880, const BN880_Mag_Reg_t
     return FC_OK;
 }
 
-FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, const uint16_t end_pos)
-{
-    if (gps_nav_pvt == NULL) return FC_NULL_PTR_ERR;
-
-    uint8_t nav_msg[BN880_UBX_NAV_MSG_LEN];
-
-    FC_Status_t status = BN880_UBX_RxBuf_Read(nav_msg, BN880_UBX_NAV_MSG_LEN, end_pos);
-    if ( status != FC_OK ) return status;
-
-    // Check message is valid
-    status = BN880_UBX_Validate(nav_msg, BN880_UBX_NAV_MSG_LEN);
-    if ( status != FC_OK ) return status;
-
-    // Assigning values into struct
-    memcpy(&gps_nav_pvt->iTOW, &nav_msg[6], 4);
-    memcpy(&gps_nav_pvt->year, &nav_msg[10], 2);
-    gps_nav_pvt->month = nav_msg[12];
-    gps_nav_pvt->day = nav_msg[13];
-    gps_nav_pvt->hour = nav_msg[14];
-    gps_nav_pvt->min = nav_msg[15];
-    gps_nav_pvt->sec = nav_msg[16];
-    gps_nav_pvt->valid = nav_msg[17];
-    memcpy(&gps_nav_pvt->time_acc, &nav_msg[18], 4);
-    memcpy(&gps_nav_pvt->nano, &nav_msg[22], 4);
-    gps_nav_pvt->fix_type = nav_msg[26];
-    gps_nav_pvt->flags1 = nav_msg[27];
-    gps_nav_pvt->flags2 = nav_msg[28];
-    gps_nav_pvt->num_sv = nav_msg[29];
-    memcpy(&gps_nav_pvt->lon, &nav_msg[30], 4);
-    memcpy(&gps_nav_pvt->lat, &nav_msg[34], 4);
-    memcpy(&gps_nav_pvt->height, &nav_msg[38], 4);
-    memcpy(&gps_nav_pvt->height_msl, &nav_msg[42], 4);
-    memcpy(&gps_nav_pvt->horizontal_acc, &nav_msg[46], 4);
-    memcpy(&gps_nav_pvt->vertical_acc, &nav_msg[50], 4);
-    memcpy(&gps_nav_pvt->north_vel, &nav_msg[54], 4);
-    memcpy(&gps_nav_pvt->east_vel, &nav_msg[58], 4);
-    memcpy(&gps_nav_pvt->down_vel, &nav_msg[62], 4);
-    memcpy(&gps_nav_pvt->ground_speed, &nav_msg[66], 4);
-    memcpy(&gps_nav_pvt->heading_motion, &nav_msg[70], 4);
-    memcpy(&gps_nav_pvt->speed_acc, &nav_msg[74], 4);
-    memcpy(&gps_nav_pvt->heading_acc, &nav_msg[78], 4);
-    memcpy(&gps_nav_pvt->position_dop, &nav_msg[82], 2);
-    // Reserved data in bytes 84-89
-    memcpy(&gps_nav_pvt->heading_vel, &nav_msg[90], 4);
-    memcpy(&gps_nav_pvt->mag_dec, &nav_msg[94], 2);
-    memcpy(&gps_nav_pvt->mag_acc, &nav_msg[96], 2);
-
-    return FC_OK;
-}
-
 static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_Msg_t *msg)
 {
 
@@ -349,7 +375,7 @@ static FC_Status_t BN880_UBX_SendMessage(const BN880_t *bn880, const BN880_UBX_M
     // DMA callback status
     uint32_t cb_status = 0;
 
-    // Sum of uint16_t bytes of UBX message plus the length
+    // Total frame: 2 sync + 1 class + 1 id + 2 length + payload + 2 checksum
     const uint16_t msg_length = 8 + msg->length;
 
     gps_tx_dma[0] = BN880_UBX_SYNC_1;

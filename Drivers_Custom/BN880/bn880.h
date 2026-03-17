@@ -206,6 +206,13 @@ typedef struct
 
 typedef struct
 {
+    int16_t                     x;
+    int16_t                     y;
+    int16_t                     z;
+} BN880_Mag_Data_t;
+
+typedef struct
+{
     TaskHandle_t                task_handle;
     UART_HandleTypeDef          *uart;
     I2C_HandleTypeDef           *i2c;
@@ -228,7 +235,7 @@ typedef struct
 * ========================================================================= */
 FC_Status_t BN880_Init(BN880_t *bn880);
 FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, uint16_t end_pos);
-
+FC_Status_t BN880_Mag_Parse(const BN880_t *bn880, BN880_Mag_Data_t *mag_data);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
