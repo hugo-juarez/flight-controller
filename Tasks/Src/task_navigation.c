@@ -29,6 +29,7 @@ void task_navigation(void *params)
 
     uint32_t cb_status = 0;
     BN880_GPS_NAV_PVT_t nav_pvt = {0};
+    BN880_Mag_Data_t mag_data = {0};
 
     const BN880_Config_t config = {
         .task_handle = xTaskGetCurrentTaskHandle(),
@@ -56,23 +57,16 @@ void task_navigation(void *params)
     while (1)
     {
         // Wait for acknowledge bit
-        if (xTaskNotifyWaitIndexed(BN880_TASK_GPS_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(100)) == pdFALSE)
+        if (xTaskNotifyWaitIndexed(BN880_TASK_GPS_RX_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, pdMS_TO_TICKS(100)) != pdFALSE)
         {
-            //@ToDo: Add or trigger alarm for now it is ignored
-            continue;
+            if ((cb_status & 0xFF) == FC_OK)
+            {
+                const uint16_t end_pos = (uint16_t) (cb_status >> 8 & 0xFFFF);
+                BN880_GPS_Parse(&nav_pvt, end_pos);
+            }
         }
 
-        if ((cb_status & 0xFF) != FC_OK)
-        {
-            continue;
-        }
-
-        const uint16_t end_pos = (uint16_t) (cb_status >> 8 & 0xFFFF);
-
-        if (BN880_GPS_Parse(&nav_pvt, end_pos) == FC_OK)
-        {
-            continue;
-        }
+        BN880_Mag_Parse(&bn880, &mag_data);
 
     }
 }
