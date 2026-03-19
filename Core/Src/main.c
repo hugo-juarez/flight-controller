@@ -61,6 +61,7 @@ DMA_HandleTypeDef hdma_usart2_tx;
 static FC_Hw_t hw = {
   .hspi_imu = &hspi1,
   .hi2c_mag = &hi2c2,
+  .huart_crsf = &huart1,
   .huart_gps = &huart2,
   .huart_print = &huart3,
 };
