@@ -30,6 +30,7 @@
 #include "task_monitor.h"
 #include "task_priorities.h"
 #include "BN880/bn880.h"
+#include "CRSF/crsf.h"
 
 /* =========================================================================
  * Public APIs
@@ -39,6 +40,9 @@ FC_Status_t app_init(FC_Hw_t *hw)
     BaseType_t status = pdFAIL;
 
     status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)hw, TASK_PRI_IMU, NULL);
+    if (status != pdPASS) return FC_ERR;
+
+    status = xTaskCreate(task_crsf, "CRSF Task", STACK_CRSF, (void*)hw, TASK_PRI_CRSF, NULL);
     if (status != pdPASS) return FC_ERR;
 
     status = xTaskCreate(task_navigation, "NAV Task", STACK_NAVIGATION, (void*)hw, TASK_PRI_NAVIGATION, NULL);
@@ -98,6 +102,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if (huart->Instance == GPS_UART)
     {
         BN880_GPS_RxCmplt_Callback(Size);
+    } else if (huart->Instance == CRSF_UART)
+    {
+        CRSF_RxCmplt_Callback(Size);
     }
 }
 
@@ -106,5 +113,8 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == GPS_UART)
     {
         BN880_GPS_Error_Callback(huart);
+    } else if (huart->Instance == CRSF_UART)
+    {
+        CRSF_GPS_Error_Callback();
     }
 }
