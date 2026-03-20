@@ -18,6 +18,11 @@
 * ========================================================================= */
 #include "crsf.h"
 
+/* =========================================================================
+* Private Global Variables
+* ========================================================================= */
+static TaskHandle_t crsf_task_handle;
+
 __attribute__((section(".sram2")))
 __attribute__((aligned(32)))
 static uint8_t crsf_dma[CRSF_DMA_BUF_SIZE];
@@ -30,6 +35,9 @@ FC_Status_t CRSF_Init(CRSF_t *crsf)
 {
     if (crsf == NULL) return FC_NULL_PTR_ERR;
 
+    // Set global task handle
+    crsf_task_handle = crsf->task_handle;
+
     // Enable DMA reading till IDLE interrupt
     if ( HAL_UARTEx_ReceiveToIdle_DMA(crsf->uart, crsf_dma, CRSF_DMA_BUF_SIZE) != HAL_OK)
     {
@@ -41,4 +49,15 @@ FC_Status_t CRSF_Init(CRSF_t *crsf)
     __HAL_DMA_DISABLE_IT(crsf->uart->hdmarx, DMA_IT_TC);
 
     return FC_OK;
+}
+
+/* =========================================================================
+* Callback APIs
+* ========================================================================= */
+void CRSF_RxCmplt_Callback(uint16_t end_pos)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    uint32_t value = (uint32_t) end_pos << 8 | FC_OK;
+    xTaskNotifyIndexedFromISR(crsf_task_handle, CRSF_TASK_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }

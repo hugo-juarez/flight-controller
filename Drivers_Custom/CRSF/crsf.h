@@ -19,6 +19,8 @@
 #ifndef FLIGHT_CONTROLLER_CRSF_H
 #define FLIGHT_CONTROLLER_CRSF_H
 
+#include <FreeRTOS.h>
+#include <task.h>
 #include "stm32f7xx_hal.h"
 #include "fc_types.h"
 
@@ -33,12 +35,18 @@
 * ========================================================================= */
 typedef struct
 {
-    UART_HandleTypeDef *uart;
+    TaskHandle_t            task_handle;
+    UART_HandleTypeDef      *uart;
 } CRSF_t;
 
 /* =========================================================================
 * Public APIs
 * ========================================================================= */
 FC_Status_t CRSF_Init(CRSF_t *crsf);
+
+/* =========================================================================
+* Callback APIs
+* ========================================================================= */
+void CRSF_RxCmplt_Callback(uint16_t end_pos);
 
 #endif //FLIGHT_CONTROLLER_CRSF_H
