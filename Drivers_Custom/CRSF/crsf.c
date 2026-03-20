@@ -61,3 +61,10 @@ void CRSF_RxCmplt_Callback(uint16_t end_pos)
     xTaskNotifyIndexedFromISR(crsf_task_handle, CRSF_TASK_NOTIFY_INDEX, value, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
+
+void CRSF_GPS_Error_Callback(void)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyIndexedFromISR(crsf_task_handle, CRSF_TASK_NOTIFY_INDEX, FC_ERR, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}

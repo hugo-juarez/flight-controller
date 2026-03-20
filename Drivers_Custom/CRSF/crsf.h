@@ -48,5 +48,6 @@ FC_Status_t CRSF_Init(CRSF_t *crsf);
 * Callback APIs
 * ========================================================================= */
 void CRSF_RxCmplt_Callback(uint16_t end_pos);
+void CRSF_GPS_Error_Callback(void);
 
 #endif //FLIGHT_CONTROLLER_CRSF_H
