@@ -29,10 +29,20 @@
 * ========================================================================= */
 #define CRSF_TASK_NOTIFY_INDEX      0
 #define CRSF_DMA_BUF_SIZE           256U
+#define CRSF_MIN_FRAME_LENGTH       2U
+#define CRSF_MAX_FRAME_LENGTH       62U
+#define CRSF_SYNC_BYTE              0xC8
 
 /* =========================================================================
 * Structs
 * ========================================================================= */
+typedef struct
+{
+    uint8_t         frame_length;
+    uint8_t         type;
+    uint8_t         payload[CRSF_MAX_FRAME_LENGTH];
+} CRSF_Data_t;
+
 typedef struct
 {
     TaskHandle_t            task_handle;
@@ -43,11 +53,12 @@ typedef struct
 * Public APIs
 * ========================================================================= */
 FC_Status_t CRSF_Init(CRSF_t *crsf);
+FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos);
 
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
 void CRSF_RxCmplt_Callback(uint16_t end_pos);
-void CRSF_GPS_Error_Callback(void);
+void CRSF_Error_Callback(void);
 
 #endif //FLIGHT_CONTROLLER_CRSF_H

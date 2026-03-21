@@ -18,19 +18,38 @@
 #include "task_crsf.h"
 #include <FreeRTOS.h>
 #include <task.h>
+#include "CRSF/crsf.h"
 #include "fc_types.h"
 
 void task_crsf(void *params)
 {
     FC_Hw_t *hw = (FC_Hw_t *)params;
 
-    uint8_t data[64];
+    CRSF_t crsf = {
+        .task_handle = xTaskGetCurrentTaskHandle(),
+        .uart = hw->huart_crsf,
+    };
 
-    UNUSED(hw);
-    UNUSED(data);
+    CRSF_Data_t data = {0};
+
+    FC_Status_t status = CRSF_Init(&crsf);
+    configASSERT(status == FC_OK);
 
     while (1)
     {
+        uint32_t cb_status;
 
+        xTaskNotifyWaitIndexed(CRSF_TASK_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, portMAX_DELAY);
+
+        if ((cb_status & 0xFF) != FC_OK) continue;
+
+
+        const uint16_t end_pos = (uint16_t) (cb_status >> 8 & 0xFFFF);
+        if ( CRSF_Parse(&data, end_pos) != FC_OK) continue;
+
+        // Now depending on the data we get is the action but right now the only one I am interested in is byte 16
+        // which is the radio controller channel data
+
+        HAL_UART_Transmit(hw->huart_print, &data.type, 1, HAL_MAX_DELAY);
     }
 }
