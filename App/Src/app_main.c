@@ -115,6 +115,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
         BN880_GPS_Error_Callback(huart);
     } else if (huart->Instance == CRSF_UART)
     {
-        CRSF_GPS_Error_Callback();
+        CRSF_Error_Callback();
     }
 }
