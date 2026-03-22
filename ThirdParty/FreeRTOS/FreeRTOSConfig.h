@@ -62,7 +62,7 @@
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES	3
 #define configUSE_MUTEXES						1
 #define configQUEUE_REGISTRY_SIZE				8
-#define configCHECK_FOR_STACK_OVERFLOW			0
+#define configCHECK_FOR_STACK_OVERFLOW			2
 #define configUSE_RECURSIVE_MUTEXES				1
 #define configUSE_MALLOC_FAILED_HOOK			0
 #define configUSE_APPLICATION_TASK_TAG			0

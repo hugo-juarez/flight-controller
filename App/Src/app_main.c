@@ -127,3 +127,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
         CRSF_Error_Callback();
     }
 }
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+    (void)xTask;
+    (void)pcTaskName;
+    configASSERT(0);
+}    
