@@ -239,8 +239,8 @@ FC_Status_t BN880_Mag_Parse(const BN880_t *bn880, BN880_Mag_Data_t *mag_data);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void BN880_GPS_TxCmplt_Callback(void);
-void BN880_GPS_RxCmplt_Callback(uint16_t end_pos);
+void BN880_GPS_TxCplt_Callback(void);
+void BN880_GPS_RxCplt_Callback(uint16_t end_pos);
 void BN880_GPS_Error_Callback(UART_HandleTypeDef *huart);
 void BN880_Mag_MasterTxCplt_Callback(void);
 void BN880_Mag_MasterRxCplt_Callback(void);

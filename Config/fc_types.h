@@ -43,9 +43,39 @@ typedef enum
 * ========================================================================= */
 typedef struct
 {
-    float ax, ay, az; /* Accelerometer data in m/s^2 */
-    float gx, gy, gz; /* Gyro data in deg/s */
+    struct
+    {
+        float               x;
+        float               y;
+        float               z;
+    } accel;
+    struct
+    {
+        float               x;
+        float               y;
+        float               z;
+    } gyro;
 } FC_IMU_Data_t;
+
+typedef struct
+{
+    uint16_t                ch_1:   11;
+    uint16_t                ch_2:   11;
+    uint16_t                ch_3:   11;
+    uint16_t                ch_4:   11;
+    uint16_t                ch_5:   11;
+    uint16_t                ch_6:   11;
+    uint16_t                ch_7:   11;
+    uint16_t                ch_8:   11;
+    uint16_t                ch_9:   11;
+    uint16_t                ch_10:  11;
+    uint16_t                ch_11:  11;
+    uint16_t                ch_12:  11;
+    uint16_t                ch_13:  11;
+    uint16_t                ch_14:  11;
+    uint16_t                ch_15:  11;
+    uint16_t                ch_16:  11;
+} __packed FC_RC_Ch_Data_t;
 
 typedef struct
 {
@@ -54,7 +84,18 @@ typedef struct
     UART_HandleTypeDef      *huart_crsf;
     UART_HandleTypeDef      *huart_gps;
     UART_HandleTypeDef      *huart_print;
-    FC_IMU_Data_t           accel_data;
 } FC_Hw_t;
+
+typedef struct
+{
+    FC_IMU_Data_t           imu;
+    FC_RC_Ch_Data_t         rc_ch;
+} FC_State_t;
+
+typedef struct
+{
+    FC_Hw_t                *hw;
+    FC_State_t             *state;
+} FC_App_Context_t;
 
 #endif //FLIGHT_CONTROLLER_FC_TYPES_H

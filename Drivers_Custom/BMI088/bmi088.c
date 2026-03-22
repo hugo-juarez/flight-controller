@@ -169,9 +169,9 @@ FC_Status_t BMI088_Read_IMU_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_dat
     const float acc_range = acc_range_conversion[bmi088->settings.acc_range];
 
     // Convert to m/s^2 and save to imu_data
-    imu_data->ax = (float) ax_lsb * acc_range;
-    imu_data->ay = (float) ay_lsb * acc_range;
-    imu_data->az = (float) az_lsb * acc_range;
+    imu_data->accel.x = (float) ax_lsb * acc_range;
+    imu_data->accel.y = (float) ay_lsb * acc_range;
+    imu_data->accel.z = (float) az_lsb * acc_range;
 
     return FC_OK;
 }
@@ -196,9 +196,9 @@ FC_Status_t BMI088_Read_IMU_Gyro(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data
     // Get conversion rate for deg/s
     const float gyro_range = gyro_range_conversion[bmi088->settings.gyro_range];
 
-    imu_data->gx = (float) gx_lsb * gyro_range;
-    imu_data->gy = (float) gy_lsb * gyro_range;
-    imu_data->gz = (float) gz_lsb * gyro_range;
+    imu_data->gyro.x = (float) gx_lsb * gyro_range;
+    imu_data->gyro.y = (float) gy_lsb * gyro_range;
+    imu_data->gyro.z = (float) gz_lsb * gyro_range;
 
     return FC_OK;
 }

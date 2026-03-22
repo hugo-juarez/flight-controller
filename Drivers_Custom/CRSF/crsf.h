@@ -32,6 +32,7 @@
 #define CRSF_MIN_FRAME_LENGTH       2U
 #define CRSF_MAX_FRAME_LENGTH       62U
 #define CRSF_SYNC_BYTE              0xC8
+#define CRSF_TYPE_RC_CH             0x16
 
 /* =========================================================================
 * Structs
@@ -58,7 +59,7 @@ FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void CRSF_RxCmplt_Callback(uint16_t end_pos);
+void CRSF_RxCplt_Callback(uint16_t end_pos);
 void CRSF_Error_Callback(void);
 
 #endif //FLIGHT_CONTROLLER_CRSF_H

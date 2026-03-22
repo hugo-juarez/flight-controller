@@ -33,19 +33,28 @@
 #include "CRSF/crsf.h"
 
 /* =========================================================================
+ * Private Global Variables
+ * ========================================================================= */
+static FC_State_t state = {0};
+static FC_App_Context_t context;
+/* =========================================================================
  * Public APIs
  * ========================================================================= */
 FC_Status_t app_init(FC_Hw_t *hw)
 {
     BaseType_t status = pdFAIL;
 
-    status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)hw, TASK_PRI_IMU, NULL);
+    // Pass state and hw to context
+    context.hw = hw;
+    context.state = &state;
+
+    status = xTaskCreate(task_imu, "IMU Task", STACK_IMU, (void*)&context, TASK_PRI_IMU, NULL);
     if (status != pdPASS) return FC_ERR;
 
-    status = xTaskCreate(task_crsf, "CRSF Task", STACK_CRSF, (void*)hw, TASK_PRI_CRSF, NULL);
+    status = xTaskCreate(task_crsf, "CRSF Task", STACK_CRSF, (void*)&context, TASK_PRI_CRSF, NULL);
     if (status != pdPASS) return FC_ERR;
 
-    status = xTaskCreate(task_navigation, "NAV Task", STACK_NAVIGATION, (void*)hw, TASK_PRI_NAVIGATION, NULL);
+    status = xTaskCreate(task_navigation, "NAV Task", STACK_NAVIGATION, (void*)&context, TASK_PRI_NAVIGATION, NULL);
     if (status != pdPASS) return FC_ERR;
 
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
@@ -93,7 +102,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == GPS_UART)
     {
-        BN880_GPS_TxCmplt_Callback();
+        BN880_GPS_TxCplt_Callback();
     }
 }
 
@@ -101,10 +110,10 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == GPS_UART)
     {
-        BN880_GPS_RxCmplt_Callback(Size);
+        BN880_GPS_RxCplt_Callback(Size);
     } else if (huart->Instance == CRSF_UART)
     {
-        CRSF_RxCmplt_Callback(Size);
+        CRSF_RxCplt_Callback(Size);
     }
 }
 

@@ -147,7 +147,7 @@ static uint8_t CRSF_Calc_CRC(const uint8_t *data, const uint8_t len)
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void CRSF_RxCmplt_Callback(uint16_t end_pos)
+void CRSF_RxCplt_Callback(uint16_t end_pos)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     uint32_t value = (uint32_t) end_pos << 8 | FC_OK;

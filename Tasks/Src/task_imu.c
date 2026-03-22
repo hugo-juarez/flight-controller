@@ -28,11 +28,11 @@
 * ========================================================================= */
 void task_imu(void *params)
 {
-    FC_Hw_t *hw = (FC_Hw_t *)params;
+    FC_App_Context_t *context = (FC_App_Context_t *)params;
 
     const BMI088_Config_t config = {
         .task_handle = xTaskGetCurrentTaskHandle(),
-        .spi = hw->hspi_imu,
+        .spi = context->hw->hspi_imu,
         .csb1_pin = CSB1_Pin,
         .csb1_port = CSB1_GPIO_Port,
         .csb2_pin = CSB2_Pin,
@@ -57,7 +57,7 @@ void task_imu(void *params)
 
     while (1)
     {
-        status = BMI088_Read_IMU(&bmi088, &hw->accel_data);
+        status = BMI088_Read_IMU(&bmi088, &context->state->imu);
         configASSERT(status == FC_OK);
 
         vTaskDelay(pdMS_TO_TICKS(1));

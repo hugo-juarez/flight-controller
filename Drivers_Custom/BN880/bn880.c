@@ -523,14 +523,14 @@ static BN880_UBX_Checksum_t BN880_UBX_Checksum(const uint8_t *msg, const uint16_
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
-void BN880_GPS_TxCmplt_Callback(void)
+void BN880_GPS_TxCplt_Callback(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xTaskNotifyIndexedFromISR(bn880_task_handle, BN880_TASK_GPS_TX_NOTIFY_INDEX, FC_OK, eSetValueWithOverwrite, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
-void BN880_GPS_RxCmplt_Callback(uint16_t end_pos)
+void BN880_GPS_RxCplt_Callback(uint16_t end_pos)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     uint32_t value = (uint32_t) end_pos << 8 | FC_OK;

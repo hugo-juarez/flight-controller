@@ -23,11 +23,11 @@
 
 void task_crsf(void *params)
 {
-    FC_Hw_t *hw = (FC_Hw_t *)params;
+    FC_App_Context_t *context = (FC_App_Context_t *)params;
 
     CRSF_t crsf = {
         .task_handle = xTaskGetCurrentTaskHandle(),
-        .uart = hw->huart_crsf,
+        .uart = context->hw->huart_crsf,
     };
 
     CRSF_Data_t data = {0};
@@ -37,19 +37,23 @@ void task_crsf(void *params)
 
     while (1)
     {
-        uint32_t cb_status;
+        uint32_t notify_val;
 
-        xTaskNotifyWaitIndexed(CRSF_TASK_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &cb_status, portMAX_DELAY);
+        xTaskNotifyWaitIndexed(CRSF_TASK_NOTIFY_INDEX, UINT32_MAX, UINT32_MAX, &notify_val, portMAX_DELAY);
 
-        if ((cb_status & 0xFF) != FC_OK) continue;
+        if ((notify_val & 0xFF) != FC_OK) continue;
 
 
-        const uint16_t end_pos = (uint16_t) (cb_status >> 8 & 0xFFFF);
+        const uint16_t end_pos = (uint16_t) (notify_val >> 8 & 0xFFFF);
         if ( CRSF_Parse(&data, end_pos) != FC_OK) continue;
 
         // Now depending on the data we get is the action but right now the only one I am interested in is byte 16
         // which is the radio controller channel data
 
-        HAL_UART_Transmit(hw->huart_print, &data.type, 1, HAL_MAX_DELAY);
+        if (data.type != CRSF_TYPE_RC_CH) continue;
+
+
+
+        HAL_UART_Transmit(context->hw->huart_print, &data.type, 1, HAL_MAX_DELAY);
     }
 }

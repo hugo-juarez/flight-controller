@@ -25,7 +25,7 @@
 * ========================================================================= */
 void task_navigation(void *params)
 {
-    FC_Hw_t *hw = (FC_Hw_t *)params;
+    FC_App_Context_t *context = (FC_App_Context_t *)params;
 
     uint32_t cb_status = 0;
     BN880_GPS_NAV_PVT_t nav_pvt = {0};
@@ -33,8 +33,8 @@ void task_navigation(void *params)
 
     const BN880_Config_t config = {
         .task_handle = xTaskGetCurrentTaskHandle(),
-        .i2c = hw->hi2c_mag,
-        .uart = hw->huart_gps,
+        .i2c = context->hw->hi2c_mag,
+        .uart = context->hw->huart_gps,
     };
 
     BN880_t bn880 = {
