@@ -29,7 +29,7 @@ __attribute__((section(".sram2")))
 __attribute__((aligned(32)))
 static uint8_t crsf_dma[CRSF_DMA_BUF_SIZE];
 
-uint8_t crc8tab[256] = {
+static uint8_t crc8tab[256] = {
     0x00, 0xD5, 0x7F, 0xAA, 0xFE, 0x2B, 0x81, 0x54, 0x29, 0xFC, 0x56, 0x83, 0xD7, 0x02, 0xA8, 0x7D,
     0x52, 0x87, 0x2D, 0xF8, 0xAC, 0x79, 0xD3, 0x06, 0x7B, 0xAE, 0x04, 0xD1, 0x85, 0x50, 0xFA, 0x2F,
     0xA4, 0x71, 0xDB, 0x0E, 0x5A, 0x8F, 0x25, 0xF0, 0x8D, 0x58, 0xF2, 0x27, 0x73, 0xA6, 0x0C, 0xD9,
@@ -129,6 +129,32 @@ FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos)
     data->type = buffer[2];
     // Copy everything except the type since i added it before and CRC
     memcpy(data->payload, &buffer[3], length - 2U);
+
+    return FC_OK;
+}
+
+FC_Status_t CRSF_Unpack_Channel(CRSF_Data_t *data, FC_RC_Ch_Data_t *rc_ch_data)
+{
+    if (data == NULL || rc_ch_data == NULL) return FC_NULL_PTR_ERR;
+
+    const uint8_t *payload = data->payload;
+
+    rc_ch_data->ch_1  = (payload[0]  | payload[1]  << 8) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_2  = (payload[1]  >> 3 | payload[2]  << 5) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_3  = (payload[2]  >> 6 | payload[3]  << 2 | payload[4] << 10)& CRSF_RC_CH_MASK;
+    rc_ch_data->ch_4  = (payload[4]  >> 1 | payload[5]  << 7) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_5  = (payload[5]  >> 4 | payload[6]  << 4) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_6  = (payload[6]  >> 7 | payload[7]  << 1 | payload[8] << 9) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_7  = (payload[8]  >> 2 | payload[9]  << 6) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_8  = (payload[9]  >> 5 | payload[10] << 3) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_9  = (payload[11] | payload[12] << 8) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_10 = (payload[12] >> 3 | payload[13] << 5) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_11 = (payload[13] >> 6 | payload[14] << 2 | payload[15]<<10) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_12 = (payload[15] >> 1 | payload[16] << 7) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_13 = (payload[16] >> 4 | payload[17] << 4) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_14 = (payload[17] >> 7 | payload[18] << 1 | payload[19]<<9)  & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_15 = (payload[19] >> 2 | payload[20] << 6) & CRSF_RC_CH_MASK;
+    rc_ch_data->ch_16 = (payload[20] >> 5 | payload[21] << 3) & CRSF_RC_CH_MASK;
 
     return FC_OK;
 }

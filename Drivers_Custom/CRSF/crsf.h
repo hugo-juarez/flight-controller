@@ -33,6 +33,7 @@
 #define CRSF_MAX_FRAME_LENGTH       62U
 #define CRSF_SYNC_BYTE              0xC8
 #define CRSF_TYPE_RC_CH             0x16
+#define CRSF_RC_CH_MASK             0x07FF
 
 /* =========================================================================
 * Structs
@@ -55,6 +56,7 @@ typedef struct
 * ========================================================================= */
 FC_Status_t CRSF_Init(CRSF_t *crsf);
 FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos);
+FC_Status_t CRSF_Unpack_Channel(CRSF_Data_t *data, FC_RC_Ch_Data_t *rc_ch_data);
 
 /* =========================================================================
 * Callback APIs

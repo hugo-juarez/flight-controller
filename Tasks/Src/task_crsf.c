@@ -18,6 +18,7 @@
 #include "task_crsf.h"
 #include <FreeRTOS.h>
 #include <task.h>
+#include <string.h>
 #include "CRSF/crsf.h"
 #include "fc_types.h"
 
@@ -52,8 +53,9 @@ void task_crsf(void *params)
 
         if (data.type != CRSF_TYPE_RC_CH) continue;
 
+        status = CRSF_Unpack_Channel(&data, &context->state->rc_ch);
+        if (status != FC_OK) continue;
 
 
-        HAL_UART_Transmit(context->hw->huart_print, &data.type, 1, HAL_MAX_DELAY);
     }
 }
