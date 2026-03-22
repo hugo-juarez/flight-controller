@@ -57,7 +57,7 @@ typedef struct
 FC_Status_t CRSF_Init(CRSF_t *crsf);
 FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos);
 FC_Status_t CRSF_Unpack_Channel(CRSF_Data_t *data, FC_RC_Ch_Data_t *rc_ch_data);
-
+FC_Status_t CRSF_Print_Channel(UART_HandleTypeDef *print_uart, const FC_RC_Ch_Data_t *rc_ch_data);
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */

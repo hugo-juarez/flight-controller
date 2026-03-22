@@ -18,6 +18,7 @@
 * ========================================================================= */
 #include "crsf.h"
 #include <string.h>
+#include <stdio.h>
 
 /* =========================================================================
 * Private Global Variables
@@ -83,12 +84,15 @@ FC_Status_t CRSF_Parse(CRSF_Data_t *data, uint16_t end_pos)
 {
     if ( data == NULL ) return FC_NULL_PTR_ERR;
 
+    end_pos %= CRSF_DMA_BUF_SIZE;
+
     // Calculate how many bytes are available without advancing the pointer
     const uint16_t available = (end_pos - crsf_read_pos + CRSF_DMA_BUF_SIZE) % CRSF_DMA_BUF_SIZE;
 
     // If data less or greater than min/max frame length including sync and frame length bytes then error in receiving
     if (available < (CRSF_MIN_FRAME_LENGTH + 2U) || available > (CRSF_MAX_FRAME_LENGTH + 2U) )
     {
+        crsf_read_pos = end_pos;
         return FC_ERR;
     }
 
@@ -159,6 +163,36 @@ FC_Status_t CRSF_Unpack_Channel(CRSF_Data_t *data, FC_RC_Ch_Data_t *rc_ch_data)
     return FC_OK;
 }
 
+FC_Status_t CRSF_Print_Channel(UART_HandleTypeDef *print_uart, const FC_RC_Ch_Data_t *rc_ch_data)
+{
+    static uint32_t print_counter = 0;
+
+    if (++print_counter < 50)
+    {
+        return FC_OK;
+    }
+
+    print_counter = 0;
+
+    if (rc_ch_data == NULL) return FC_NULL_PTR_ERR;
+
+    char buf[256];
+
+    int len = snprintf(buf, sizeof(buf),
+        "RC: ch1=%4u ch2=%4u ch3=%4u ch4=%4u, ch5=%4u ch6=%4u ch7=%4u ch8=%4u "
+        "ch9=%4u ch10=%4u ch11=%4u ch12=%4u ch13=%4u ch14=%4u ch15=%4u ch16=%4u\r\n",
+        rc_ch_data->ch_1, rc_ch_data->ch_2, rc_ch_data->ch_3, rc_ch_data->ch_4,
+        rc_ch_data->ch_5, rc_ch_data->ch_6, rc_ch_data->ch_7, rc_ch_data->ch_8,
+        rc_ch_data->ch_9, rc_ch_data->ch_10, rc_ch_data->ch_11, rc_ch_data->ch_12,
+        rc_ch_data->ch_13, rc_ch_data->ch_14, rc_ch_data->ch_15, rc_ch_data->ch_16);
+
+    if (len < 0 || len >= sizeof(buf)) return FC_ERR;
+
+    HAL_UART_Transmit(print_uart, (uint8_t *)buf, len, HAL_MAX_DELAY);
+
+    return FC_OK;
+
+}
 /* =========================================================================
 * Private Function
 * ========================================================================= */
