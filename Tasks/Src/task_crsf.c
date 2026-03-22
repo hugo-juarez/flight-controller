@@ -56,6 +56,7 @@ void task_crsf(void *params)
         status = CRSF_Unpack_Channel(&data, &context->state->rc_ch);
         if (status != FC_OK) continue;
 
-
+        status = CRSF_Print_Channel(context->hw->huart_print, &context->state->rc_ch);
+        configASSERT(status == FC_OK);
     }
 }
