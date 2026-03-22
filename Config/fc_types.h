@@ -59,23 +59,23 @@ typedef struct
 
 typedef struct
 {
-    uint16_t                ch_1:   11;
-    uint16_t                ch_2:   11;
-    uint16_t                ch_3:   11;
-    uint16_t                ch_4:   11;
-    uint16_t                ch_5:   11;
-    uint16_t                ch_6:   11;
-    uint16_t                ch_7:   11;
-    uint16_t                ch_8:   11;
-    uint16_t                ch_9:   11;
-    uint16_t                ch_10:  11;
-    uint16_t                ch_11:  11;
-    uint16_t                ch_12:  11;
-    uint16_t                ch_13:  11;
-    uint16_t                ch_14:  11;
-    uint16_t                ch_15:  11;
-    uint16_t                ch_16:  11;
-} __packed FC_RC_Ch_Data_t;
+    uint16_t                ch_1;
+    uint16_t                ch_2;
+    uint16_t                ch_3;
+    uint16_t                ch_4;
+    uint16_t                ch_5;
+    uint16_t                ch_6;
+    uint16_t                ch_7;
+    uint16_t                ch_8;
+    uint16_t                ch_9;
+    uint16_t                ch_10;
+    uint16_t                ch_11;
+    uint16_t                ch_12;
+    uint16_t                ch_13;
+    uint16_t                ch_14;
+    uint16_t                ch_15;
+    uint16_t                ch_16;
+} FC_RC_Ch_Data_t;
 
 typedef struct
 {
