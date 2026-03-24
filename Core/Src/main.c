@@ -62,6 +62,7 @@ DMA_HandleTypeDef hdma_usart2_tx;
 /* USER CODE BEGIN PV */
 static FC_Hw_t hw = {
   .hspi_imu = &hspi1,
+  .hspi_bar = &hspi4,
   .hi2c_mag = &hi2c2,
   .huart_crsf = &huart1,
   .huart_gps = &huart2,

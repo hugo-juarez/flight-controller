@@ -80,6 +80,7 @@ typedef struct
 typedef struct
 {
     SPI_HandleTypeDef       *hspi_imu;
+    SPI_HandleTypeDef       *hspi_bar;
     I2C_HandleTypeDef       *hi2c_mag;
     UART_HandleTypeDef      *huart_crsf;
     UART_HandleTypeDef      *huart_gps;
