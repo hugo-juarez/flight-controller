@@ -3,6 +3,7 @@ set(TASKS_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_imu.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_crsf.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_navigation.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Src/task_barometer.c
 )
 
 set(TASKS_INCLUDES
