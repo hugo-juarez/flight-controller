@@ -33,10 +33,10 @@ void task_imu(void *params)
     const BMI088_Config_t config = {
         .task_handle = xTaskGetCurrentTaskHandle(),
         .spi = context->hw->hspi_imu,
-        .csb1_pin = CSB1_Pin,
-        .csb1_port = CSB1_GPIO_Port,
-        .csb2_pin = CSB2_Pin,
-        .csb2_port = CSB2_GPIO_Port,
+        .csb1_pin = IMU_ACCEL_CSB_Pin,
+        .csb1_port = IMU_ACCEL_CSB_Port,
+        .csb2_pin = IMU_GYRO_CSB_Pin,
+        .csb2_port = IMU_GYRO_CSB_Port,
     };
 
     const BMI088_t bmi088 = {

@@ -25,11 +25,11 @@
 * Defines
 * ========================================================================= */
 
-#define LED_PIN             GPIO_PIN_0
-#define LED_GPIO_Port       GPIOB
-#define CSB2_Pin            GPIO_PIN_13
-#define CSB2_GPIO_Port      GPIOB
-#define CSB1_Pin            GPIO_PIN_15
-#define CSB1_GPIO_Port      GPIOB
+#define LED_PIN                 GPIO_PIN_0
+#define LED_GPIO_Port           GPIOB
+#define IMU_GYRO_CSB_Pin        GPIO_PIN_13
+#define IMU_GYRO_CSB_Port       GPIOB
+#define IMU_ACCEL_CSB_Pin       GPIO_PIN_15
+#define IMU_ACCEL_CSB_Port      GPIOB
 
 #endif //FLIGHT_CONTROLLER_PIN_MAP_H
