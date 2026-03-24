@@ -124,17 +124,12 @@ typedef struct
 
 typedef struct
 {
+    BMI088_Config_t         config;
     BMI088_Accel_BWP_t          acc_bwp;
     BMI088_Accel_ODR_t          acc_odr;
     BMI088_Accel_Range_t        acc_range;
     BMI088_Gyro_Bandwidth_t     gyro_bandwidth;
     BMI088_Gyro_Range_t         gyro_range;
-} BMI088_Settings_t;
-
-typedef struct
-{
-    BMI088_Config_t         config;
-    BMI088_Settings_t       settings;
 } BMI088_t;
 
 /* =========================================================================

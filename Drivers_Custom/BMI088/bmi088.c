@@ -163,10 +163,10 @@ FC_Status_t BMI088_Read_IMU_Accel(const BMI088_t *bmi088, FC_IMU_Data_t *imu_dat
     const int16_t az_lsb = (int16_t) ((uint16_t) data[5] << 8 | data[4]);
 
     // Checking acc_range is valid before assign it
-    if (bmi088->settings.acc_range >= sizeof(acc_range_conversion)/sizeof(acc_range_conversion[0])) return FC_CONFIG_ERR;
+    if (bmi088->acc_range >= sizeof(acc_range_conversion)/sizeof(acc_range_conversion[0])) return FC_CONFIG_ERR;
 
     // Get range converted for m/s^2
-    const float acc_range = acc_range_conversion[bmi088->settings.acc_range];
+    const float acc_range = acc_range_conversion[bmi088->acc_range];
 
     // Convert to m/s^2 and save to imu_data
     imu_data->accel.x = (float) ax_lsb * acc_range;
@@ -191,10 +191,10 @@ FC_Status_t BMI088_Read_IMU_Gyro(const BMI088_t *bmi088, FC_IMU_Data_t *imu_data
     const int16_t gz_lsb = (int16_t) ((uint16_t) data[5] << 8 | data[4]);
 
     // Checking gyro_range is valid
-    if (bmi088->settings.gyro_range >= sizeof(gyro_range_conversion)/sizeof(gyro_range_conversion[0])) return FC_CONFIG_ERR;
+    if (bmi088->gyro_range >= sizeof(gyro_range_conversion)/sizeof(gyro_range_conversion[0])) return FC_CONFIG_ERR;
 
     // Get conversion rate for deg/s
-    const float gyro_range = gyro_range_conversion[bmi088->settings.gyro_range];
+    const float gyro_range = gyro_range_conversion[bmi088->gyro_range];
 
     imu_data->gyro.x = (float) gx_lsb * gyro_range;
     imu_data->gyro.y = (float) gy_lsb * gyro_range;
@@ -233,12 +233,12 @@ static FC_Status_t BMI088_Accel_Init(const BMI088_t *bmi088)
 static FC_Status_t BMI088_Accel_Config(const BMI088_t *bmi088)
 {
     // Config Accel BWP and ODR
-    const uint8_t acc_conf = bmi088->settings.acc_bwp | bmi088->settings.acc_odr;
+    const uint8_t acc_conf = bmi088->acc_bwp | bmi088->acc_odr;
     FC_Status_t status = BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_CONF, acc_conf);
     if ( status != FC_OK ) return status;
 
     // Config Accel Range
-    const uint8_t acc_range = bmi088->settings.acc_range & 0x3;
+    const uint8_t acc_range = bmi088->acc_range & 0x3;
     status = BMI088_Accel_WriteRegister(bmi088, BMI088_ACCEL_REG_RANGE, acc_range);
     if ( status != FC_OK ) return status;
 
@@ -330,12 +330,12 @@ static FC_Status_t BMI088_Accel_BurstReadData(const BMI088_t *bmi088, uint8_t *d
 static FC_Status_t BMI088_Gyro_Config(const BMI088_t *bmi088)
 {
     // Config Gyro Bandwidth
-    const uint8_t bandwidth = bmi088->settings.gyro_bandwidth;
+    const uint8_t bandwidth = bmi088->gyro_bandwidth;
     FC_Status_t status = BMI088_Gyro_WriteRegister(bmi088, BMI088_GYRO_REG_BANDWIDTH, bandwidth);
     if (status != FC_OK) return status;
 
     // Config Gyro Range
-    const uint8_t range = bmi088->settings.gyro_range;
+    const uint8_t range = bmi088->gyro_range;
     status = BMI088_Gyro_WriteRegister(bmi088, BMI088_GYRO_REG_RANGE, range);
     if (status != FC_OK) return status;
 

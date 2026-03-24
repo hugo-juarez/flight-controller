@@ -39,17 +39,13 @@ void task_imu(void *params)
         .csb2_port = CSB2_GPIO_Port,
     };
 
-    const BMI088_Settings_t settings = {
+    const BMI088_t bmi088 = {
+        .config = config,
         .acc_bwp = BMI088_ACCEL_BWP_OSR2,
         .acc_odr = BMI088_ACCEL_ODR_800,
         .acc_range = BMI088_ACCEL_RANGE_6,
         .gyro_bandwidth = BMI088_GYRO_BANDWIDTH_2000_230,
         .gyro_range = BMI088_GYRO_RANGE_500,
-    };
-
-    const BMI088_t bmi088 = {
-        .config = config,
-        .settings = settings,
     };
 
     FC_Status_t status = BMI088_Init(&bmi088);
