@@ -236,6 +236,7 @@ typedef struct
 FC_Status_t BN880_Init(BN880_t *bn880);
 FC_Status_t BN880_GPS_Parse(BN880_GPS_NAV_PVT_t *gps_nav_pvt, uint16_t end_pos);
 FC_Status_t BN880_Mag_Parse(const BN880_t *bn880, BN880_Mag_Data_t *mag_data);
+
 /* =========================================================================
 * Callback APIs
 * ========================================================================= */
