@@ -16,9 +16,29 @@
 * @copyright Copyright (c) 2026 Hugo Juarez. Licensed under the MIT License.
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
-
-
 #ifndef FLIGHT_CONTROLLER_BMP390_H
 #define FLIGHT_CONTROLLER_BMP390_H
+
+#include "stm32f7xx_hal.h"
+
+/* =========================================================================
+* Structs
+* ========================================================================= */
+typedef struct
+{
+    SPI_HandleTypeDef       *spi;
+    uint16_t                csb_pin;
+    GPIO_TypeDef            *csb_port;
+} BMP390_Config_t;
+
+typedef struct
+{
+    BMP390_Config_t         config;
+} BMP390_t;
+
+/* =========================================================================
+* Public APIs
+* ========================================================================= */
+
 
 #endif //FLIGHT_CONTROLLER_BMP390_H
