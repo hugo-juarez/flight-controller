@@ -31,5 +31,7 @@
 #define IMU_GYRO_CSB_Port       GPIOB
 #define IMU_ACCEL_CSB_Pin       GPIO_PIN_15
 #define IMU_ACCEL_CSB_Port      GPIOB
+#define BAROMETER_CSB_Pin       GPIO_PIN_3
+#define BAROMETER_CSB_Port      GPIOE
 
 #endif //FLIGHT_CONTROLLER_PIN_MAP_H
