@@ -19,4 +19,9 @@
 #ifndef FLIGHT_CONTROLLER_TASK_BAROMETER_H
 #define FLIGHT_CONTROLLER_TASK_BAROMETER_H
 
+/* =========================================================================
+* Public APIs
+* ========================================================================= */
+void task_barometer(void *params);
+
 #endif //FLIGHT_CONTROLLER_TASK_BAROMETER_H
