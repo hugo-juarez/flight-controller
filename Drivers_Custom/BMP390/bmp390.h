@@ -22,6 +22,29 @@
 #include "stm32f7xx_hal.h"
 
 /* =========================================================================
+* Enums
+* ========================================================================= */
+typedef enum
+{
+    BMP390_REG_CHIP_ID = 0x00,
+    BMP390_REG_REV_ID = 0X01,
+    BMP390_REG_ERR_REG = 0X02,
+    BMP390_REG_STATUS = 0X03,
+    BMP390_REG_PRESSURE_DATA = 0X04,
+    BMP390_REG_TEMP_DATA = 0X07,
+    BMP390_REG_SENSOR_TIME = 0X0C,
+    BMP390_REG_EVENT = 0X10,
+    BMP390_REG_INT_STATUS = 0X11,
+    BMP390_REG_INT_CTRL = 0X19,
+    BMP390_REG_IF_CONF = 0X1A,
+    BMP390_REG_PWR_CTRL = 0X1B,
+    BMP390_REG_OSR = 0X1C,
+    BMP390_REG_ODR = 0X1D,
+    BMP390_REG_CONFIG = 0X1F,
+    BMP390_REG_CMD = 0X7E,
+} BMP390_Reg_t;
+
+/* =========================================================================
 * Structs
 * ========================================================================= */
 typedef struct
