@@ -25,8 +25,9 @@
 * Private Function Prototypes
 * ========================================================================= */
 FC_Status_t BMP390_GetCalibData(BMP390_t *bmp390);
-FC_Status_t BMP390_ReadRegister(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data);
-FC_Status_t BMP390_BurstRead(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data, uint8_t len);
+FC_Status_t BMP390_WriteRegister(const BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t data);
+FC_Status_t BMP390_ReadRegister(const BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data);
+FC_Status_t BMP390_BurstRead(const BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data, uint8_t len);
 
 /* =========================================================================
 * Public APIs
@@ -58,7 +59,7 @@ FC_Status_t BMP390_Init(BMP390_t *bmp390)
 }
 
 
-FC_Status_t BMP390_WhoAmI (BMP390_t *bmp390)
+FC_Status_t BMP390_WhoAmI (const BMP390_t *bmp390)
 {
     if (bmp390 == NULL) return  FC_NULL_PTR_ERR;
 
@@ -100,7 +101,25 @@ FC_Status_t BMP390_GetCalibData(BMP390_t *bmp390)
     return FC_OK;
 }
 
-FC_Status_t BMP390_ReadRegister(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data)
+FC_Status_t BMP390_WriteRegister(const BMP390_t *bmp390, const BMP390_Reg_t reg, const uint8_t data)
+{
+    FC_Status_t status = FC_OK;
+
+    // Pull down CSB pin to start communication
+    HAL_GPIO_WritePin(bmp390->config.csb_port, bmp390->config.csb_pin, GPIO_PIN_RESET);
+
+    uint8_t buffer[2] = {(uint8_t) (reg & ~0x80), data};
+    uint8_t dummy[2];
+
+    if ( HAL_SPI_TransmitReceive(bmp390->config.spi, buffer, dummy, 2, HAL_MAX_DELAY) != HAL_OK ) status = FC_SPI_ERR;
+
+    // End communication set CSB pin high
+    HAL_GPIO_WritePin(bmp390->config.csb_port, bmp390->config.csb_pin, GPIO_PIN_SET);
+
+    return status;
+}
+
+FC_Status_t BMP390_ReadRegister(const BMP390_t *bmp390, const BMP390_Reg_t reg, uint8_t *data)
 {
     FC_Status_t status = FC_OK;
 
@@ -112,6 +131,7 @@ FC_Status_t BMP390_ReadRegister(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *dat
 
     if ( HAL_SPI_TransmitReceive(bmp390->config.spi, dummy, buffer, 3, HAL_MAX_DELAY) != HAL_OK ) status = FC_SPI_ERR;
 
+    // End communication set CSB pin high
     HAL_GPIO_WritePin(bmp390->config.csb_port, bmp390->config.csb_pin, GPIO_PIN_SET);
 
     if (status == FC_OK)
@@ -122,7 +142,7 @@ FC_Status_t BMP390_ReadRegister(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *dat
     return status;
 }
 
-FC_Status_t BMP390_BurstRead(BMP390_t *bmp390, BMP390_Reg_t reg, uint8_t *data, uint8_t len)
+FC_Status_t BMP390_BurstRead(const BMP390_t *bmp390, const BMP390_Reg_t reg, uint8_t *data, const uint8_t len)
 {
     // Since reg takes 1st bit and the second bit is empty the message length is len + 2U
     const uint8_t msg_len = len + 2U;
