@@ -27,6 +27,7 @@
 #include "task_imu.h"
 #include "task_crsf.h"
 #include "task_navigation.h"
+#include "task_barometer.h"
 #include "task_monitor.h"
 #include "task_priorities.h"
 #include "BN880/bn880.h"
@@ -55,6 +56,9 @@ FC_Status_t app_init(FC_Hw_t *hw)
     if (status != pdPASS) return FC_ERR;
 
     status = xTaskCreate(task_navigation, "NAV Task", STACK_NAVIGATION, (void*)&context, TASK_PRI_NAVIGATION, NULL);
+    if (status != pdPASS) return FC_ERR;
+
+    status = xTaskCreate(task_barometer, "BAR Task", STACK_BAROMETER, (void*)&context, TASK_PRI_BAROMETER, NULL);
     if (status != pdPASS) return FC_ERR;
 
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
