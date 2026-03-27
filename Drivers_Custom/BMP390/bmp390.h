@@ -25,7 +25,10 @@
 /* =========================================================================
 * Macros
 * ========================================================================= */
-#define BMP390_CHIP_ID      0x60
+#define BMP390_CHIP_ID          0x60
+#define BMP390_PRESSURE_EN      0x01
+#define BMP390_TEMPERATURE_EN   0x02
+#define BMP390_MODE_NORMAL      0x30
 
 /* =========================================================================
 * Enums
@@ -50,19 +53,77 @@ typedef enum
     BMP390_REG_CMD = 0X7E,
 } BMP390_Reg_t;
 
+typedef enum
+{
+    BMP390_OSR_PRESSURE_1= 0x00,
+    BMP390_OSR_PRESSURE_2 = 0x01,
+    BMP390_OSR_PRESSURE_4 = 0x02,
+    BMP390_OSR_PRESSURE_8 = 0x03,
+    BMP390_OSR_PRESSURE_16 = 0x04,
+    BMP390_OSR_PRESSURE_32 = 0x05,
+} BMP390_OSR_Pressure_t;
+
+typedef enum
+{
+    BMP390_OSR_TEMPERATURE_1 = 0x00,
+    BMP390_OSR_TEMPERATURE_2 = 0x08,
+    BMP390_OSR_TEMPERATURE_4 = 0x10,
+    BMP390_OSR_TEMPERATURE_8 = 0x18,
+    BMP390_OSR_TEMPERATURE_16 = 0x20,
+    BMP390_OSR_TEMPERATURE_32 = 0x28,
+} BMP390_OSR_Temperature_t;
+
+typedef enum
+{
+    BMP390_ODR_200 = 0x00,
+    BMP390_ODR_100 = 0x01,
+    BMP390_ODR_50 = 0x02,
+    BMP390_ODR_25 = 0x03,
+    BMP390_ODR_12_5 = 0x04,
+    BMP390_ODR_6_5 = 0x05,
+    BMP390_ODR_3_1 = 0x06,
+    BMP390_ODR_1_5 = 0x07,
+    BMP390_ODR_0_78 = 0x08,
+    BMP390_ODR_0_39 = 0x09,
+    BMP390_ODR_0_2 = 0x0A,
+    BMP390_ODR_0_1 = 0x0B,
+    BMP390_ODR_0_05 = 0x0C,
+    BMP390_ODR_0_02 = 0x0D,
+    BMP390_ODR_0_01 = 0x0E,
+    BMP390_ODR_0_006 = 0x0F,
+    BMP390_ODR_0_003 = 0x10,
+    BMP390_ODR_0_0015 = 0x11,
+} BMP390_ODR_t;
+
+typedef enum
+{
+    BMP390_IIR_0 = 0x00,
+    BMP390_IIR_1 = 0x02,
+    BMP390_IIR_3 = 0x04,
+    BMP390_IIR_7 = 0x06,
+    BMP390_IIR_15 = 0x08,
+    BMP390_IIR_31 = 0x0A,
+    BMP390_IIR_63 = 0x0C,
+    BMP390_IIR_127 = 0x0E,
+} BMP390_IIR_t;
+
 /* =========================================================================
 * Structs
 * ========================================================================= */
 typedef struct
 {
-    SPI_HandleTypeDef       *spi;
-    uint16_t                csb_pin;
-    GPIO_TypeDef            *csb_port;
+    SPI_HandleTypeDef           *spi;
+    uint16_t                    csb_pin;
+    GPIO_TypeDef                *csb_port;
 } BMP390_Config_t;
 
 typedef struct
 {
-    BMP390_Config_t         config;
+    BMP390_Config_t             config;
+    BMP390_OSR_Pressure_t       osr_pressure;
+    BMP390_OSR_Temperature_t    osr_temperature;
+    BMP390_ODR_t                odr;
+    BMP390_IIR_t                iir;
 } BMP390_t;
 
 /* =========================================================================
