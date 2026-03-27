@@ -29,7 +29,7 @@
 #define BMP390_PRESSURE_EN      0x01
 #define BMP390_TEMPERATURE_EN   0x02
 #define BMP390_MODE_NORMAL      0x30
-#define BMP390_MSG_MAX_LEN      22U
+#define BMP390_MSG_MAX_LEN      23U
 
 /* =========================================================================
 * Enums
