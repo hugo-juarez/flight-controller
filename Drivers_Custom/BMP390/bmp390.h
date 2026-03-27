@@ -152,6 +152,6 @@ typedef struct
 * Public APIs
 * ========================================================================= */
 FC_Status_t BMP390_Init (BMP390_t *bmp390);
-FC_Status_t BMP390_WhoAmI (BMP390_t *bmp390);
+FC_Status_t BMP390_WhoAmI (const BMP390_t *bmp390);
 
 #endif //FLIGHT_CONTROLLER_BMP390_H
