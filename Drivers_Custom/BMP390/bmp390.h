@@ -119,11 +119,30 @@ typedef struct
 
 typedef struct
 {
+    uint16_t                    t1;
+    uint16_t                    t2;
+    int8_t                      t3;
+    int16_t                     p1;
+    int16_t                     p2;
+    int8_t                      p3;
+    int8_t                      p4;
+    uint16_t                    p5;
+    uint16_t                    p6;
+    int8_t                      p7;
+    int8_t                      p8;
+    int16_t                     p9;
+    int8_t                      p10;
+    int8_t                      p11;
+} BMP390_Calib_t;
+
+typedef struct
+{
     BMP390_Config_t             config;
     BMP390_OSR_Pressure_t       osr_pressure;
     BMP390_OSR_Temperature_t    osr_temperature;
     BMP390_ODR_t                odr;
     BMP390_IIR_t                iir;
+    BMP390_Calib_t              calib;
 } BMP390_t;
 
 /* =========================================================================
