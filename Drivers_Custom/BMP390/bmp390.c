@@ -55,6 +55,41 @@ FC_Status_t BMP390_Init(BMP390_t *bmp390)
     status = BMP390_GetCalibData(bmp390);
     if (status != FC_OK) return status;
 
+    // Set configuration values
+    uint8_t iir = bmp390->iir;
+    status = BMP390_WriteRegister(bmp390, BMP390_REG_CONFIG, iir);
+    if (status != FC_OK) return status;
+
+    uint8_t osr = bmp390->osr_pressure | bmp390->osr_temperature;
+    status = BMP390_WriteRegister(bmp390, BMP390_REG_OSR, osr);
+    if (status != FC_OK) return status;
+
+    uint8_t odr = bmp390->odr;
+    status = BMP390_WriteRegister(bmp390, BMP390_REG_ODR, odr);
+    if (status != FC_OK) return status;
+
+    uint8_t pwr = BMP390_PRESSURE_EN | BMP390_TEMPERATURE_EN | BMP390_MODE_NORMAL;
+    status = BMP390_WriteRegister(bmp390, BMP390_REG_PWR_CTRL, pwr);
+    if (status != FC_OK) return status;
+
+    // Check configuration values are set
+    dummy = 0;
+    status = BMP390_ReadRegister(bmp390, BMP390_REG_CONFIG, &dummy);
+    if (status != FC_OK) return status;
+    if ( (dummy & 0x0E) != iir ) return FC_ERR;
+
+    status = BMP390_ReadRegister(bmp390, BMP390_REG_OSR, &dummy);
+    if (status != FC_OK) return status;
+    if ( (dummy & 0x3F) != osr ) return FC_ERR;
+
+    status = BMP390_ReadRegister(bmp390, BMP390_REG_ODR, &dummy);
+    if (status != FC_OK) return status;
+    if ( (dummy & 0x1F) != odr ) return FC_ERR;
+
+    status = BMP390_ReadRegister(bmp390, BMP390_REG_PWR_CTRL, &dummy);
+    if (status != FC_OK) return status;
+    if ( (dummy & 0x3F) != pwr ) return FC_ERR;
+
     return FC_OK;
 }
 
