@@ -29,6 +29,7 @@
 #define BMP390_PRESSURE_EN      0x01
 #define BMP390_TEMPERATURE_EN   0x02
 #define BMP390_MODE_NORMAL      0x30
+#define BMP390_MSG_MAX_LEN      22U
 
 /* =========================================================================
 * Enums
@@ -50,6 +51,8 @@ typedef enum
     BMP390_REG_OSR = 0X1C,
     BMP390_REG_ODR = 0X1D,
     BMP390_REG_CONFIG = 0X1F,
+    BMP390_REG_CAL_TEMP = 0x31,
+    BMP390_REG_CAL_PRESSURE = 0x36,
     BMP390_REG_CMD = 0X7E,
 } BMP390_Reg_t;
 
