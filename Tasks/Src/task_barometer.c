@@ -17,6 +17,8 @@
 *             See LICENSE file in the root of the repository for details.
 * ========================================================================= */
 #include "task_barometer.h"
+#include <FreeRTOS.h>
+#include <task.h>
 #include "BMP390/bmp390.h"
 #include "fc_types.h"
 #include "pin_map.h"
@@ -34,13 +36,18 @@ void task_barometer(void *params)
         .csb_port = BAROMETER_CSB_Port,
     };
 
-    BMP390_t barometer = {
+    BMP390_t bar = {
         .config = config,
     };
 
+    FC_Status_t status = BMP390_Init(&bar);
+    configASSERT(status == FC_OK);
+
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+
     while (1)
     {
-        UNUSED(barometer);
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
     }
 
 }
