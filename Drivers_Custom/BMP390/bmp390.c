@@ -20,6 +20,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <string.h>
+#include <math.h>
 
 /* =========================================================================
 * Private Function Prototypes
@@ -118,20 +119,20 @@ FC_Status_t BMP390_GetCalibData(BMP390_t *bmp390)
     if (status != FC_OK) return status;
 
     // Setting values to calibration data
-    memcpy(&bmp390->calib.t1, &calib_data[0], 2);
-    memcpy(&bmp390->calib.t2, &calib_data[2], 2);
-    bmp390->calib.t3 = (int8_t) calib_data[4];
-    memcpy(&bmp390->calib.p1, &calib_data[5], 2);
-    memcpy(&bmp390->calib.p2, &calib_data[7], 2);
-    bmp390->calib.p3 = (int8_t) calib_data[9];
-    bmp390->calib.p4 = (int8_t) calib_data[10];
-    memcpy(&bmp390->calib.p5, &calib_data[11], 2);
-    memcpy(&bmp390->calib.p6, &calib_data[13], 2);
-    bmp390->calib.p7 = (int8_t) calib_data[15];
-    bmp390->calib.p8 = (int8_t) calib_data[16];
-    memcpy(&bmp390->calib.p9, &calib_data[17], 2);
-    bmp390->calib.p10 = (int8_t) calib_data[19];
-    bmp390->calib.p11 = (int8_t) calib_data[20];
+    bmp390->calib.par_t1 = (float) ((uint16_t)( (calib_data[1] << 8) | calib_data[0] )) / powf(2, -8);
+    bmp390->calib.par_t2 = (float) ((uint16_t)( (calib_data[3] << 8) | calib_data[2] )) / powf(2, 30);
+    bmp390->calib.par_t3 = (float) ((int8_t) calib_data[4]) / powf(2, 48);
+    bmp390->calib.par_p1 = (float) ((int16_t)( (calib_data[6] << 8) | calib_data[5] ) - 16384) / powf(2, 20);
+    bmp390->calib.par_p2 = (float) ((int16_t)( (calib_data[8] << 8) | calib_data[7] ) - 16384) / powf(2, 29);
+    bmp390->calib.par_p3 = (float) ((int8_t) calib_data[9]) / powf(2, 32);
+    bmp390->calib.par_p4 = (float) ((int8_t) calib_data[10]) / powf(2, 37);
+    bmp390->calib.par_p5 = (float) ((uint16_t)( (calib_data[12] << 8) | calib_data[11] )) / powf(2, -3);
+    bmp390->calib.par_p6 = (float) ((uint16_t)( (calib_data[14] << 8) | calib_data[13] )) / powf(2, 6);
+    bmp390->calib.par_p7 = (float) ((int8_t) calib_data[15]) / powf(2, 8);
+    bmp390->calib.par_p8 = (float) ((int8_t) calib_data[16]) / powf(2, 15);
+    bmp390->calib.par_p9 = (float) ((int16_t)( (calib_data[18] << 8) | calib_data[17] )) / powf(2, 48);
+    bmp390->calib.par_p10 = (float) ((int8_t) calib_data[19]) / powf(2, 48);
+    bmp390->calib.par_p11 = (float) ((int8_t) calib_data[20]) / powf(2, 65);
 
     return FC_OK;
 }

@@ -122,20 +122,20 @@ typedef struct
 
 typedef struct
 {
-    uint16_t                    t1;
-    uint16_t                    t2;
-    int8_t                      t3;
-    int16_t                     p1;
-    int16_t                     p2;
-    int8_t                      p3;
-    int8_t                      p4;
-    uint16_t                    p5;
-    uint16_t                    p6;
-    int8_t                      p7;
-    int8_t                      p8;
-    int16_t                     p9;
-    int8_t                      p10;
-    int8_t                      p11;
+    float                       par_t1;
+    float                       par_t2;
+    float                       par_t3;
+    float                       par_p1;
+    float                       par_p2;
+    float                       par_p3;
+    float                       par_p4;
+    float                       par_p5;
+    float                       par_p6;
+    float                       par_p7;
+    float                       par_p8;
+    float                       par_p9;
+    float                       par_p10;
+    float                       par_p11;
 } BMP390_Calib_t;
 
 typedef struct
