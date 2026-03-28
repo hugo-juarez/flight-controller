@@ -1,3 +1,6 @@
 [submodule "ThirdParty/FreeRTOS/FreeRTOS-Kernel"]
 	path = ThirdParty/FreeRTOS/FreeRTOS-Kernel
 	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
+[submodule "ThirdParty/CMSIS-DSP"]
+	path = ThirdParty/CMSIS-DSP
+	url = git@github.com:ARM-software/CMSIS-DSP.git

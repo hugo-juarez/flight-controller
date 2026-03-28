@@ -40,6 +40,9 @@ add_subdirectory(cmake/stm32cubemx)
 # Adding freertos library
 include(cmake/freertos.cmake)
 
+# Adding CMSIS-DSP library
+include(cmake/cmsis-dsp.cmake)
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths

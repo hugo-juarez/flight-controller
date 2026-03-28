@@ -17,4 +17,5 @@ target_link_libraries(drivers PRIVATE
     config
     stm32cubemx
     freertos
+    cmsis_dsp
 )
