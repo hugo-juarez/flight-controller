@@ -38,6 +38,10 @@ void task_barometer(void *params)
 
     BMP390_t bar = {
         .config = config,
+        .osr_pressure = BMP390_OSR_PRESSURE_8,
+        .osr_temperature = BMP390_OSR_TEMPERATURE_1,
+        .odr = BMP390_ODR_50,
+        .iir = BMP390_IIR_3,
     };
 
     FC_Status_t status = BMP390_Init(&bar);
