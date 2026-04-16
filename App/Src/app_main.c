@@ -64,6 +64,9 @@ FC_Status_t app_init(FC_Hw_t *hw)
     status = xTaskCreate(task_monitor_led_run, "LED Monitor Task", STACK_MONITOR_LED, NULL, TASK_PRI_MONITOR_LED, NULL);
     if (status != pdPASS) return FC_ERR;
 
+    status = xTaskCreate(task_monitor_usb, "USB Monitor Task", STACK_MONITOR_USB, NULL, TASK_PRI_MONITOR_USB, NULL);
+    if (status != pdPASS) return FC_ERR;
+
     return FC_OK;
 }
 
