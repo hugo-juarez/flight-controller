@@ -25,6 +25,7 @@
 * ========================================================================= */
 
 void task_monitor_led_run(void* params);
+void task_monitor_usb(void* params);
 
 
 #endif //FLIGHT_CONTROLLER_TASK_MONITOR_H

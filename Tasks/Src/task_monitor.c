@@ -19,7 +19,9 @@
 #include "task_monitor.h"
 #include <FreeRTOS.h>
 #include <task.h>
+#include <stdio.h>
 #include "stm32f7xx_hal.h"
+#include "usbd_cdc_if.h"
 #include "pin_map.h"
 
 
@@ -35,5 +37,22 @@ void task_monitor_led_run(void* params)
     {
         HAL_GPIO_TogglePin(LED_GPIO_Port, LED_PIN);
         xTaskDelayUntil(&xLastWakeTime, xDelay );
+    }
+}
+
+void task_monitor_usb(void* params)
+{
+    char buf[64];
+    uint32_t count = 0;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+
+    while (1)
+    {
+        int len = snprintf(buf, sizeof(buf), "usb ok: %lu\r\n", (unsigned long)count++);
+
+        while (CDC_Transmit_FS((uint8_t*)buf, (uint16_t)len) == USBD_BUSY)
+            vTaskDelay(pdMS_TO_TICKS(1));
+
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(500));
     }
 }
