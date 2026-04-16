@@ -24,11 +24,13 @@
 #define TASK_PRI_NAVIGATION         (4)
 #define TASK_PRI_BAROMETER          (3)
 #define TASK_PRI_MONITOR_LED        (1)
+#define TASK_PRI_MONITOR_USB        (1)
 
 #define STACK_IMU                   (256)
 #define STACK_CRSF                  (256)
 #define STACK_NAVIGATION            (256)
 #define STACK_BAROMETER             (256)
 #define STACK_MONITOR_LED           (128)
+#define STACK_MONITOR_USB           (256)
 
 #endif //FLIGHT_CONTROLLER_TASK_PRIORITIES_H
